@@ -24,3 +24,4 @@ The rules that must remain true throughout the lifetime of the application.
 1. A trek may have one or more assigned staff members.
 2. A Trek Staff member may be assigned to multiple treks, provided the trek durations do not overlap.
 3. A Trek Staff member can only manage treks assigned to them.
+4. Only approved Trek Staff can be assigned to a trek.
