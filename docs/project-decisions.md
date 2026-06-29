@@ -245,6 +245,7 @@
 ### Reason
 - The duration of a trek can be calculated from `start_date` and `end_date` whenever required.
 - Storing `duration` would introduce redundant data.
+- The course team confirmed on the discussion forum that the `duration` attribute is optional because it can be computed from `start_date` and `end_date`.
 
 ### Impact
 - removes redundant data in the database.
@@ -254,3 +255,135 @@
 - Store `duration` as a separate attribute in the `Trek` table (current design).    
 
 ---
+## Decision 9 : Single Login Page for All User Roles
+
+### Info
+- Date : June 29, 2026
+- Status : Current
+
+### Context
+- The application supports three user roles: `admin`, `staff`, and `trekker`.
+- There were two possible approaches:
+    - Separate login pages for each role.
+    - A single login page for all users.
+
+### Decision
+- A single login page (/login) will be used for all users.
+- The user role will not be provided during login.
+- After successful authentication, the application will determine the user's role from the User table and redirect the user to the corresponding dashboard.
+
+### Reason
+- The role is already stored in the database, so asking the user to select a role during login is redundant.
+- Since the username is unique across all users, there cannot be two users with same username but with different roles.
+- Eliminates the possibility of selecting an incorrect role during login.
+
+### Impact
+- Simplifies the authentication flow.
+- Provides a single entry point for all users.
+- Keeps the database as the single source of truth for user roles.
+
+### Alternatives Considered
+1. Design 1 : Separate login pages for `admin`, `staff`, and `trekker`.
+2. Design 2 : Passing the role as a query parameter during login.
+
+---
+
+## Decision 10 : Separate Registration Endpoints for Each User Role
+
+### Info
+- Date : June 29, 2026
+- Status : Current
+
+### Context
+- Only `trekker` and `staff` are allowed to self-register.
+- `admin` accounts are created manually and cannot be registered through the application.
+- Two possible approaches were considered:
+    - A single registration page with role selection.
+    - Separate registration endpoints for each role.
+
+### Decision
+- Separate registration endpoints will be used:
+    - `/register/trekker`
+    - `/register/staff`
+
+### Reason
+- The role becomes implicit from the endpoint.
+- Prevents users from attempting to register as an `admin`.
+- Simplifies the registration logic by eliminating role validation during registration.
+
+### Impact
+- Cleaner registration workflow.
+- Eliminates unnecessary role selection during registration.
+
+### Alternatives Considered
+- A single registration page with a role selector.
+
+---
+
+## Decision 11 : Staff Assignment Managed Through Trek
+
+### Info
+- Date : June 29, 2026
+- Status : Current
+
+### Context
+- Staff assignment represents a many-to-many relationship between Staff and Trek.
+- Two designs were considered:
+    - A dedicated assignment module.
+    - Managing assignments from the trek being administered.
+
+### Decision
+- Staff assignment will be managed from the trek itself.
+    - `GET  /admin/treks/<trek_id>/assign`
+    - `POST /admin/treks/<trek_id>/assign`
+- The assignment page displays the current staff assigned to a trek and allows the administrator to update the complete assignment in a single operation.
+
+### Reason
+- Staff assignment is a part of managing a trek.
+- The administrator naturally assigns staff while managing a trek.
+
+### Impact
+- Produces a simpler user interface.
+- Avoids introducing a separate assignment module.
+- Keeps trek-related operations grouped together.
+
+### Alternatives Considered
+- A separate assignment resource such as:
+    - `/admin/assignments`
+    - `/admin/assignments/create`
+
+---
+
+## Decision 12 : Searching and Filtering Using Query Parameters
+
+### Info
+- Date : June 29, 2026
+- Status : Current
+
+### Context
+- Several pages support searching and filtering, such as:
+    - Available treks.
+    - Booking history.
+    - Admin search.
+- Two approaches were considered:
+    - Separate routes for search and filtering.
+    - Query parameters on the existing resource routes.
+
+### Decision
+- Searching and filtering will be implemented using query parameters on the existing resource routes.
+
+### Reason
+- Searching and filtering do not create new resources.
+- Query parameters naturally represent different views of the same resource collection.
+- Avoids creating unnecessary endpoints.
+
+### Impact
+- Produces a smaller and more consistent routing structure.
+- Makes filtered URLs bookmarkable and shareable.
+- Reduces the number of endpoints that need to be maintained.
+
+### Alternatives Considered
+- Separate endpoints such as:
+    - `/trekker/treks/search`
+    - `/trekker/treks/filter`
+    - `/trekker/bookings/history`
