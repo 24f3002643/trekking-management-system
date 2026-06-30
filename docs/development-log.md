@@ -9,7 +9,7 @@
 4. Pre-seeded the admin in the database.
 
 
-### Decision Made
+### Decisions Made
 1. A single `User` table will be there for `admin`, `staff` and `trekker`.
 2. Duplicate bookings in the `Booking` table will be avoided using Business logic, and not via `UNIQUE` constraints.
 3. Delete cascade operation for `User` and `Trek` table will be implemented using business logic, and not using database.
@@ -19,18 +19,22 @@
 7. Added `total_slots` attribute in `Trek` table.
 8. Deleted `duration` attribute in `Trek` table.
 
-### Next Step
+### Next Step Decision
 1. The database part is complete. The next step is `Authentication and Role Management` and `Creating views for admin, staff, and trekker`.
 
 ---
 
 ## June 29, 2026
 
+### Work Decisions
+1. `Authentication and Role Management` will be completed after completing models, views and controllers.
+2. Before designing views, routes will be defined in `02-routes.md`
+
 ### Work Completed
 1. Designed the public routes for home, login, registration, and dashboards.
 2. Designed the routes for the `admin`, `staff` and `trekker`.
 
-### Decision Made
+### Decisions Made
 1. A single login page will be used for all user roles.
 2. Separate registration endpoints will be used for `trekker` and `staff`.
 3. Staff assignment will be managed from the corresponding trek instead of a separate assignment module.
@@ -40,3 +44,24 @@
 1. Design the views for `admin`, `staff` and `trekker`.
 
 --- 
+
+## June 29, 2026 to June 30, 2026
+
+### Work Decisions
+1. Before designing actual view, views and flows will be defined in `-3-views-and-flows.md` to get the idea of what views would be and what will the flow of views.
+
+### Work Completed
+1. Formalized the rough idea of views and flow in `03-views-and-flows.md`
+
+### Decisions Made
+1. Generic Message Page for displaying messages.
+2. Common Layout for Role-Specific Pages.
+3. Replacing `username` with `name` in `User` table and Email-Based Authentication.
+4. Add `amount` attribute to `Trek` table.
+5. Having a dummy payment workflow.
+
+
+### Next Steps
+1. Design the actual for `admin`, `staff` and `trekker`.
+
+---

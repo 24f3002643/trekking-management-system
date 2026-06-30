@@ -387,3 +387,157 @@
     - `/trekker/treks/search`
     - `/trekker/treks/filter`
     - `/trekker/bookings/history`
+
+## Decision 13: Generic Message Page
+
+### Info
+- Date : June 29, 2026 to June 30, 2026
+- Status : Current
+
+### Context
+- Many operations require displaying a message to the user, such as "successful registration", "invalid credentials", "pending staff approval", "access denied", "booking confirmation", etc.
+- Two approaches were considered:
+    - Render the originating page again with an error/success message.
+    - Render a generic message page and pass the required message through Jinja.
+
+### Decision
+- A single reusable message.html template will be used for displaying all informational, success, and error messages.
+- Controllers will render message.html by passing the appropriate message (and optionally a title and navigation link).
+
+### Reason
+- Produces a simple and consistent flow throughout the application.
+
+### Impact
+- All user-facing messages follow a uniform presentation.
+- Implementation becomes simple.
+
+### Alternatives Considered
+- Re-render the originating page with inline validation or status messages (the approach commonly used in production web applications).
+
+---
+
+## Decision 14: Common Layout for Role-Specific Pages
+
+### Info
+- Date : June 29, 2026 to June 30, 2026
+- Status : Current
+
+### Context
+- Each role (`admin`, `staff`, and `trekker`) consists of multiple pages such as dashboard, management pages, forms, and detail pages.
+- Two approaches were considered:
+    - Each page has its own independent layout.
+    - All pages belonging to the same role share a common layout, with only the main content changing.
+
+### Decision
+- All pages belonging to a particular role will use a common layout.
+- The layout will contain:
+    - Left Navigation Bar
+    - Top Navigation Bar
+    - Main Content Area
+- Only the Main Content Area will differ between pages.
+
+### Reason
+- Provides a consistent user interface throughout the application.
+- Clearly separates common UI components from page-specific content.
+
+### Impact
+- Every role will have a reusable base template (for example, `admin_base.html`, `staff_base.html`, and `trekker_base.html`).
+- Eliminates duplication by reusing the same layout across multiple templates.
+- Reduces maintenance effort and keeps the template structure organized.
+
+### Alternatives Considered
+1. Design 1
+    - Create a separate layout for every page.
+2. Design 2
+    - Display navigation only on the dashboard and require navigation using browser history or
+    page links.
+
+---
+
+## Decision 15: Replacing `username` with `name` in `User` table and Email-Based Authentication
+
+### Info
+- Date : June 29, 2026 to June 30, 2026
+- Status : Current
+
+### Context
+- The `username` and `email` was kept unique and non-nullable, with the idea to use either of them or both for login.
+
+
+### Decision
+- `username` attribute will be removed, and `name` attribute will be added with non-nullable and non-unique constraints.
+- Authentication will be performed using the `email` address only.
+
+### Reason
+- There may be multiple users with the same name.
+- Having `username` and no `name` will prevent from getting the actual name of user.
+- Email  are unique and natural way to authenticate.
+
+### Impact
+- Login page will ask for:
+    - Email
+    - Password
+- Registration pages will ask for:
+    - Name
+    - Email
+    - Password
+    - Phone Number
+
+### Alternatives Considered
+- Use a unique `username` for authentication while storing `name` separately.
+- Allow authentication using either `username` or `email` or both.
+
+--- 
+
+## Decision 16: Add `amount` attribute to `Trek` table.
+
+### Info
+- Date : June 29, 2026 to June 30, 2026
+- Status : Current
+
+### Context 
+- The booking process asks `trekker` to make the payment, but there is no amount associated with trek till now.
+
+### Decision
+- The `Trek` table will contain a `amount` attribute representing the booking price of the trek.
+
+### Reason
+- The project team suggested the student to have `payment_status` in the `Booking` table.
+- So there must be amount to pay for.
+
+### Impact
+- The application is now more closer to real-world scenario.
+
+### Alternatives Considered
+1. Does not store the `amount` in `Trek` table, and the `trekker` perform payment process as dummy process (Current Design).
+
+--- 
+
+## Decision 17 : Dummy Payment Workflow
+
+### Info
+- Date : June 29, 2026 to June 30, 2026
+- Status : Current
+
+### Context
+- The project requires a booking workflow involving payment.
+
+### Decision
+- A dummy payment page will be implemented to demonstrate the payment flow.
+- Clicking the "Pay Now" button will simulate a successful payment and continue the booking workflow.
+
+### Reason
+- Demonstrates the complete booking lifecycle.
+- Avoids all the hassle of multiple condition and verification on input that is usually done in payment page.
+- Integrating a real payment gateway is outside the scope of the project.
+
+### Impact
+- Keeps the implementation simple.
+
+### Alternatives Considered
+1. Design 1
+    - Integrate a real payment gateway.
+2. Design 2
+    - Skip the payment step entirely.
+
+---
