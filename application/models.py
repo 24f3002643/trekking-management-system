@@ -5,7 +5,7 @@ class User(db.Model):
     __tablename__ = 'user' # it explicitly sets the name of the database table that the model maps to.
 
     id = db.Column(db.Integer(), primary_key=True) #when primary_key=True, then autoincrement=True by default
-    username = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     phone_number = db.Column(db.String(20), unique=True) 
