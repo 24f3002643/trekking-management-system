@@ -38,7 +38,7 @@ Actors are the external entities that interact with the system.
 ### Attributes
 1. User
     - id (primary key)
-    - username (unique)
+    - name 
     - email (unique)
     - password_hash
     - phone_number (unique)
@@ -71,6 +71,7 @@ Actors are the external entities that interact with the system.
         - cancelled : this will be status of trek, if the trek is cancelled, either before the start date, between the start date (included) and end date (included), or after the end date.
     - start_date
     - end_date
+    - amount (decimal value)
     - additional_info
 
 3. Booking
@@ -111,7 +112,7 @@ Actors are the external entities that interact with the system.
 ### ER Diagram to Relational Table
 1. User
     - id (primary key)
-    - username (unique)
+    - name 
     - password_hash
     - email (unique)
     - phone_number (unique)
@@ -129,6 +130,7 @@ Actors are the external entities that interact with the system.
     - status (upcoming/ongoing/completed/cancelled)
     - start_date
     - end_date
+    - amount
     - additional_info
 
 3. Booking
