@@ -104,6 +104,21 @@ GET /admin/search
         - q      -> search keyword
 
 
+### Admin can `view and manage bookings`
+
+GET /admin/bookings
+    - To view all booking records.
+
+GET /admin/bookings/<booking_id>
+    - To view the details of a particular booking.
+
+POST /admin/bookings/<booking_id>/approve
+    - To approve a pending booking.
+
+POST /admin/bookings/<booking_id>/cancel
+    - To cancel a booking.
+
+
 ## Staff Routes 
 
 ### Staff can `view assigned treks by admin`
@@ -142,12 +157,18 @@ GET /trekker/treks/<trek_id>
     - To view the details of a particular trek.
 
 
-### Trekker can `book treks`
+### Trekker can `book treks and make payment`
 POST /trekker/treks/<trek_id>/book
     - To submit form to book a trek.
 
 POST /trekker/bookings/<booking_id>/cancel
     - To submit a request to cancel a booking.
+
+GET /trekker/payment/<booking_id>
+    - To view the form of payment.
+
+POST /trekker/payment/<booking_id>
+    - To submit the form of payment.
 
 
 ### Trekker can `view booking status and trekking history`
