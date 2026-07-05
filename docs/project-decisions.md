@@ -541,3 +541,123 @@
     - Skip the payment step entirely.
 
 ---
+
+## Decision 18 : Trek Dates Stored as `Date`, Not `DateTime`
+
+### Info
+- Date : July 5, 2026
+- Status : Current
+
+### Context
+- `Trek.start_date` and `Trek.end_date` were originally defined using 
+  `DateTime()`, which stores both a date and a time component.
+- A trek's start and end are only ever meaningful as calendar dates; 
+  no part of the application reads or uses a time-of-day component 
+  for these fields.
+
+### Decision
+- `Trek.start_date` and `Trek.end_date` will use `Date()` instead of 
+  `DateTime()`.
+
+### Reason
+- Matches the actual meaning of the data: a trek starts and ends on 
+  a date, not at a specific moment in time.
+- Avoids carrying an unused, always-midnight time component.
+- Simplifies date comparisons (e.g. determining trek status) and form 
+  handling, since HTML date inputs submit plain `YYYY-MM-DD` strings.
+
+### Impact
+- `Booking.booking_date` is unaffected and remains a `DateTime()`, 
+  since a booking's exact timestamp is meaningful for ordering.
+
+### Alternatives Considered
+- Keep `DateTime()` and always store midnight as the time component 
+  (original design).
+
+--- 
+
+## Decision 19 : Trek Status Recomputed on Fetch, Not Fixed at Creation
+
+### Info
+- Date : July 5, 2026
+- Status : Current
+
+### Context
+- `Trek.status` should reflect `upcoming`, `ongoing`, or `completed` 
+  automatically, based on the trek's dates relative to the current 
+  date, except when a trek has been explicitly `cancelled`.
+- Nothing in the application updates dates on its own; something has 
+  to actively recompute status when it matters.
+
+### Decision
+- A shared function, `refresh_trek_status(trek)` (in `utilities.py`), 
+  recalculates a trek's status from its `start_date`/`end_date` 
+  whenever a trek is fetched for display or editing. It leaves the 
+  status untouched if the trek is already `cancelled`. It does not 
+  commit to the database itself; the calling route is responsible for 
+  persisting the change.
+
+### Reason
+- The project has no background job/scheduler infrastructure, so 
+  status cannot update automatically at midnight or on a schedule.
+- Recomputing on every fetch is a reasonable middle ground: simple to 
+  implement, and correct as long as a trek is viewed reasonably 
+  regularly.
+
+### Impact
+- Every route that fetches a `Trek` for display (list, detail, edit) 
+  must call `refresh_trek_status()` and commit, or the trek's status 
+  may be stale until it is next viewed.
+
+### Alternatives Considered
+1. Design 1
+   - Store status as a computed Python property on the `Trek` model, 
+     never persisted as a column at all.
+2. Design 2
+   - Use a scheduled background task to update all trek statuses 
+     periodically (rejected as unnecessary infrastructure for this 
+     project's scope).
+
+---
+## Decision 20 : Trek Deletion Allowed Unless Active Bookings Exist
+
+### Info
+- Date : July 5, 2026
+- Status : Current
+
+### Context
+- Deleting a `Trek` also affects related `Booking` and 
+  `StaffTrekAssignment` records (per Decision 3, cascading is handled 
+  in business logic, not the database).
+- A trek that has been actually used will almost always have some 
+  `completed` bookings, so blocking deletion whenever any booking 
+  exists at all would make deletion effectively unusable for treks 
+  that have already run.
+
+### Decision
+- Deleting a trek is blocked only if it has bookings with 
+  `booking_status` in `initiated`, `pending`, or `booked` (i.e. an 
+  active booking a trekker is currently relying on).
+- If no active bookings exist, deleting the trek also deletes its 
+  remaining (`completed`/`cancelled`) bookings and any 
+  `StaffTrekAssignment` records, in that order.
+
+### Reason
+- Protects trekkers with a genuine, currently-relied-upon booking.
+- Keeps trek deletion usable in practice, rather than being blocked 
+  indefinitely by routine historical data.
+
+### Impact
+- A trekker's booking history for a deleted trek is not preserved 
+  once the trek itself is deleted.
+
+### Alternatives Considered
+1. Design 1
+   - Block deletion if any booking exists at all, regardless of 
+     status (rejected: makes deletion impractical for used treks).
+2. Design 2
+   - Allow deletion unconditionally, cascading all related records 
+     without checking booking status (rejected: could silently 
+     remove a trekker's active, paid booking).
+
+---

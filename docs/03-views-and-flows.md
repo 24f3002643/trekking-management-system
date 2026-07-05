@@ -407,38 +407,78 @@ This file contains final list of all the views and flows.
     - Dashboard : redirect to staff dashboard
     - My Treks : redirect to staff trek  page
     - Participants : redirect to staff participants page.
-    
+    - Profile : redirect to staff profile page
+    - Logout : logout the admin and redirects to login page
 2. Top Navigation bar :
-    - search : redirect to admin search page  
     - logout : logout the admin, and redirect to login page.
 3. Main Screen : Divided into two parts (Top Section and Main Section)
-    - Top Section (small rectangle area) : Shows the following information in card formats
-        - Total treks with number
-        - Total staff with number
-        - Total trekkers with number
-        - Total bookings with number
-    - Main Section (big rectangle down) : Contain a list of all the recent bookings . 
+    - First  Section (small rectangle area) : Shows the following information in card formats
+        - Assigned treks with number
+        - Total Participants registered with the treks assigned with number
+        - Total upcoming, ongoing, completed and cancelled treks assigned to him with number
+    - Main Section (big rectangle down) : Contain a list of all the assigned treks.
         - The columns of list will be :
-            - Booking ID (clickable link, will redirect to this particular booking details)
-            - Trekker
-            - Trek 
-            - Booking Date
-            - Booking Status
-            - Payment Status
+            -  ID (clickable link, will redirect to this particular trek details)
+            - Trek Name
+            - Participants
+            - Slots (available/total)
+            - Status
+            - Amount
             - Action : 
-                - Approve (if booking status is pending): Approves the booking request.
-                - Cancel (if booking status is pending or booked): Cancels the booking.
-                - View (if booking status is completed or cancelled): Displays the booking details.
+                - Update :; redirect to staff trek update page
+                - View : Displays the details of a particular trek.
         - The list will be scrollable, and only 4 enteries will be shown at once.
-        - At the end of list, there will be link to "See all bookings", which will redirect to admin booking management page.
 
 
 ### Staff Trek Page
+1. Same navigation as staff dashboard
+2. Contain a list of all the assigned treks.
+    - The columns of list will be :
+        -  ID (clickable link, will redirect to this particular trek details)
+        - Trek Name
+        - Participants
+        - Slots (available/total)
+        - Status
+        - Amount
+        - Action : 
+            - Update :; redirect to staff trek update page.
+            - View : Displays the details of a particular trek.
+    - At the end of list, there will be link to return to staff dashboard.
 
 ### Staff Trek Detail Page
+1. Same navigation as staff dashboard
+2. Contains all the details of a particular trek.
+    -  ID (clickable link, will redirect to this particular trek details)
+    - Trek Name
+    - Participants
+    - Slots (available/total)
+    - Status
+    - Amount
+    - Action : 
+        - Update :; redirect to staff trek update page.
+3. At the end, there will be link to return to Staff Trek Page
 
 ### Staff Trek Update Page
+1. Same navigation as staff dashboard
+2. Shows all the details of a particular trek, with Available slots and status as editable. rest field will be pre filled but disabled.
 
 ### Staff Participants Page
+1. Same Navigation as staff dashboard
+2. Shows a list of all the participants assigned with the trek assigned to it.
+    - ID
+    - Name
+    - Trek
+    - Email
+    - Phone Number
+3. At the end, there is a link to return to Staff Dashboard
 
 ### Staff Profile Page
+1. Contain the form to update the trekker details autofilled with current details
+    - name (changeable)
+    - email (non-editable)
+    - phone number (changeable)
+    - New Password
+2. At last, submit button which would update trigger a end point which will update the staff details.
+    - the controller will verfiy the user does not change email.
+    - it would redirect to profile page again.
+3. At last, there would be link to return to staff dashboard.

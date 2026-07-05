@@ -14,6 +14,13 @@ POST /login
 - No role is passed as a query parameter.
 - The role is determined from the database after successful authentication.
 
+## Logout Route
+POST /logout
+    - Logs out the currently authenticated user by clearing the session.
+    - Redirects to /login after logging out.
+    - Accessible to all authenticated roles (admin, staff, trekker).
+    - Uses POST (not GET) since logout changes application state (destroys the session).
+
 ## Register Page Routes
 GET /register/trekker
 POST /register/trekker
@@ -118,6 +125,10 @@ POST /admin/bookings/<booking_id>/approve
 POST /admin/bookings/<booking_id>/cancel
     - To cancel a booking.
 
+### Admin can `view summary/analytics`
+
+GET /admin/summary
+    - To view summary statistics for the admin dashboard (e.g. total treks, users, bookings).
 
 ## Staff Routes 
 
