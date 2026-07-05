@@ -1,0 +1,65 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'dashboard_page' %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div id="dashboard-top-content" >
+    <h5 class="mb-3">Quick Overview</h5>
+    <div class="row g-3">
+        {{ macros.stat_card('Total Treks', total_treks, 'signpost-2') }}
+        {{ macros.stat_card('Total Staff', total_staff, 'person-badge') }}
+        {{ macros.stat_card('Total Trekkers', total_trekkers, 'people') }}
+        {{ macros.stat_card('Total Bookings', total_bookings, 'journal-check') }}
+    </div>
+</div>
+<div id="dashboard-main-content">
+    <h5>Recent Bookings</h5>
+    <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Trekker</th>
+                    <th>Trek</th>
+                    <th>Booking Date</th>
+                    <th>Booking Status</th>
+                    <th>Payment Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in recent_bookings %}
+                <tr>
+                    <td><a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
+                    <td>{{ booking.trekker.name }}</td>
+                    <td>{{ booking.trek.trekname }}</td>
+                    <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
+                    <td>{{ booking.booking_status }}</td>
+                    <td>{{ booking.payment_status }}</td>
+                    <td>
+                        <form action="{{ url_for('admin.admin_bookings_approve', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form action="{{ url_for('admin.admin_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                        </form>
+                        <a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="text-end mt-3 me-3">
+        <a href="{{ url_for('admin.admin_bookings_page') }}" class="">See all bookings</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %} {% endblock %}

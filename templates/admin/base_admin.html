@@ -1,0 +1,19 @@
+{% extends "base_layout.html" %}
+
+
+{% block topnav_links %}
+<a href="{{ url_for('admin.admin_search')}}">Search</a>
+<form action="{{ url_for('auth.logout') }}" method="POST" style="display:inline;">
+    <button type="submit">Logout</button>
+</form>
+{% endblock %}
+
+{% block leftnav_links %}
+<a class="{{ 'active' if active_page == 'dashboard_page' else '' }}" href="{{ url_for('admin.admin_dashboard') }}"><i class="bi bi-house-door"></i>  Dashboard</a>
+<a class="{{ 'active' if active_page == 'treks_page' else '' }}" href="{{ url_for('admin.admin_treks_page') }}"><i class="bi bi-signpost-2"></i>  Treks</a>
+<a class="{{ 'active' if active_page == 'staffs_page' else '' }}" href="{{ url_for('admin.admin_staff_page') }}"><i class="bi bi-person-badge"></i>  Staffs</a>
+<a class="{{ 'active' if active_page == 'trekkers_page' else '' }}" href="{{ url_for('admin.admin_trekkers_page') }}"><i class="bi bi-people"></i>  Trekkers</a>
+<a class="{{ 'active' if active_page == 'bookings_page' else '' }}" href="{{ url_for('admin.admin_bookings_page') }}"><i class="bi bi-journal-check"></i>  Bookings</a>
+<a class="{{ 'active' if active_page == 'summary_page' else '' }}" href="{{ url_for('admin.admin_summary') }}"><i class="bi bi-bar-chart"></i>  Summary</a>
+{% endblock %}
+

@@ -1,0 +1,61 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+
+{% block page_title %} Trek Creation Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h5 class="text-center">Trek Creation Form</h5>
+    <form action="{{ url_for('admin.admin_treks_create') }}" method="post">
+        <div class="mb-3">
+            <label for="trekname" class="form-label">Trek Name</label>
+            <input type="text" id="trekname" class="form-control" name="trekname" maxlength="50" placeholder="Enter the trek name" required>
+        </div>
+        <div class="mb-3">
+            <label for="location" class="form-label">Location</label>
+            <input type="text" id="location" class="form-control" name="location" maxlength="50" placeholder="Enter the trek location" required>
+        </div>
+        <div class="mb-3">
+            <label for="difficulty" class="form-label">Difficulty</label>
+            <select class="form-select" id="difficulty" name="difficulty" required>
+                <option value="" selected disabled>Select difficulty</option>
+                <option value="easy">Easy</option>
+                <option value="moderate">Moderate</option>
+                <option value="hard">Hard</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="total_slots" class="form-label">Total Slots</label>
+            <input type="number" id="total_slots" class="form-control" name="total_slots" min="1" required>
+        </div>
+        <div class="mb-3">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" id="start_date" class="form-control" name="start_date" required>
+        </div>
+        <div class="mb-3">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" id="end_date" class="form-control" name="end_date" required>
+        </div>
+        <div class="mb-3">
+            <label for="amount" class="form-label">Amount (Rs.)</label>
+            <input type="number" id="amount" class="form-control" name="amount" min="0" step="0.01" required>
+        </div>
+        <div class="mb-3">
+            <label for="additional_info" class="form-label">Additional Information</label>
+            <textarea class="form-control" id="additional_info" name="additional_info" rows="4"></textarea>
+        </div>
+        
+        <div class="text-center mb-3">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Create Trek
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_treks_page') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

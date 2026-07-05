@@ -1,0 +1,86 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+
+{% block page_title %} Trek Detail Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h5 class="mb-3 text-center"> {{ trek.trekname }}</h5>
+    <div id="details">
+        {{ macros.detail_item("Trek ID", trek.id) }}
+        {{ macros.detail_item("Trek Name", trek.trekname) }}
+        {{ macros.detail_item("Location", trek.location) }}
+        {{ macros.detail_item("Start Date", trek.start_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("End Date", trek.end_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("Total Slots", trek.total_slots) }}
+        {{ macros.detail_item("Available Slots", trek.available_slots) }}
+        {{ macros.detail_item("Amount", trek.amount) }}
+        {{ macros.detail_item("Additional Info", trek.additional_info) }}
+        <div class="mb-2">
+            <strong>Action :</strong> 
+            <span>
+                <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}"class="btn btn-sm btn-warning">Edit</a>
+                <a href="{{ url_for('admin.admin_treks_assign_staff', trek_id=trek.id) }}" class="btn btn-sm btn-info">Assign Staff</a>
+                <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                </form>
+            </span>
+        </div>
+        
+    </div>
+    
+    <h5 class="mt-3"> Staff Assigned to this Trek</h5>
+    <div id="details-list">
+        {% if staff_assigned %}
+            <ol>
+                {% for assignment in staff_assigned %}
+                <li>
+                    <a href="{{ url_for('admin.admin_staff_view', staff_id=assignment.staff.id) }}">#{{ assignment.staff.id }}</a> {{ assignment.staff.name }}
+                </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <p class="text-muted">No staff Assigned</p>
+        {% endif %}
+    </div>
+
+    <h5 class="mt-3">Bookings in this Trek</h5>
+    <div>
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Trekker</th>
+                    <th>Booking Date</th>
+                    <th>Booking Status</th>
+                    <th>Payment Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if bookings %}
+                    {% for booking in bookings %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
+                        <td>{{ booking.trekker.name }}</td>
+                        <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
+                        <td>{{ booking.booking_status }}</td>
+                        <td>{{ booking.payment_status }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-muted">No bookings found.</td>
+                </tr>    
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_treks_page') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

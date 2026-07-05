@@ -1,0 +1,58 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'treks_page' %}
+
+{% block page_title %}Admin Trek Management Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" >All Treks</h5>
+        <a href="{{ url_for('admin.admin_treks_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i>  Create Trek</a>
+    </div>
+    <div class="table-responsive list-table-wrapper">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Trek ID</th>
+                    <th>Trek Name</th>
+                    <th>Location</th>
+                    <th>Duration</th>
+                    <th>Slots (Available/Total)</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trek in all_treks %}
+                <tr>
+                    <td><a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}">#{{ trek.id }}</a></td>
+                    <td>{{ trek.trekname }}</td>
+                    <td>{{ trek.location }}</td>
+                    <td>{{ trek.start_date.strftime('%d %b %Y') }} - {{ trek.end_date.strftime('%d %b %Y') }}</td>
+                    <td>{{ trek.available_slots}} / {{ trek.total_slots }}</td>
+                    <td>{{ trek.amount }}</td>
+                    <td>{{ trek.status }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}"class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{{ url_for('admin.admin_treks_assign_staff', trek_id=trek.id) }}" class="btn btn-sm btn-info">Assign Staff</a>
+                        <a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}" class="btn btn-sm btn-primary">View</a>
+                        <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                        
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}
