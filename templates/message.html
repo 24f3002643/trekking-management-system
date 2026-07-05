@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block body %}
+<div id="message" class="text-center">
+    <h3>{{ message }}</h3>
+    <br>
+    <a href="{{ href }}"> {{ a_text }}</a>
+</div>
+{% endblock %}

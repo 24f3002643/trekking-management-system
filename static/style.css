@@ -1,0 +1,45 @@
+*{
+    margin: 0px;
+    box-sizing: border-box;
+    /*
+    * Without border box, width: 300px, only refers to the content, and the actual width is more because of padding and border.
+    * With border box, width: 300ox includes the entire content, padding and border within 300px. 
+    */
+}
+
+#main{
+    min-height: 100vh;
+    /*
+    *100vh means 100% of the viewport height (viewport is the visible browser window).
+    * This makes #main at least as tall as the visible screen.
+    */
+}
+
+#main, #canvas{
+    border : 2px solid black;
+}
+
+#canvas{
+    width: 80%;
+    min-height: 100vh;
+    margin: auto;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /*
+    * display: flex -> turns an element into flex container. 
+    *   - Without flexbox, #form-body is placed at the top-left of #canvas.
+    *   - With flexbox, #canvas becomes a flex container, and all its direct children becomes flex items. 
+    *       - Now flexbox controls how those children are positioned.
+    * justify-content : center -> center horizontally
+    * align-items : center -> center vertically
+    */
+}
+
+#form-body{
+    border: 1px solid grey;
+    width: 300px;
+    border-radius: 5px;
+    padding: 10px;
+}

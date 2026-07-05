@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block head %}
+<style>
+    html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+    #top-navigation,
+    #left-navigation,
+    #main-section,
+    #bottom-navigation{
+        border : 1px solid black;
+    }
+
+    #screen{
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    #top-navigation{
+        height: 70px;
+    }
+
+    #main-body{
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        min-height: 0;
+    }
+    #left-navigation{
+        width: 180px;
+    }
+    #right-section{
+        flex: 1;
+        flex-direction: column;
+        display: flex;
+        min-height: 0;
+    }
+    #bottom-navigation{
+        height: 50px;
+    }
+    #main-section{
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    #left-navigation a{
+        display: block;
+        padding: 10px 15px;
+        border: 1px solid #212529;
+        margin: 8px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        color : #212529
+    }
+
+    #left-navigation a:hover {
+        background-color: #e7f1ff;
+    }
+
+    #left-navigation a.active {
+        background-color: #4782db;
+        color: #ffffff;
+        font-weight: bold;
+        border-color: #212529;
+    }
+
+    #top-navigation h3,
+    #top-navigation h4 {
+        margin: 0px;
+    }
+
+    #top-navigation-line2{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    #top-navigation h3{
+        color: #212529;
+        font-weight: 600;
+        font-size: 1.4rem;
+    }
+ 
+    #top-navigation h4{
+        color: #212529;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    #top-navigation-line2 a,
+     #top-navigation-line2 button{
+        display: inline-block;
+        padding: 6px 14px;
+        margin-left: 8px;
+        border: 1px solid #212529;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #212529;
+        font-size: 0.9rem;
+        background-color: transparent;
+        cursor: pointer;
+    }
+
+    #top-navigation-line2 a:hover,
+    #top-navigation-line2 button:hover {
+        background-color: #cfe2ff;
+    }
+
+    #bottom-navigation{
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    #bottom-navigation a{
+        padding: 6px 14px;
+        border: 1px solid #212529;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #212529;
+        font-size: 0.9rem;
+        background-color: #dee2e6;
+    }
+
+    #bottom-navigation a:hover {
+    background-color: #cfe2ff;
+}
+
+    #dashboard-main-content {
+        margin-top: 1.5rem;
+}
+
+.stat-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+.stat-icon {
+    font-size: 2.8rem;
+    color: #000000;
+}
+
+.list-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.list-table-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 0;
+}
+
+</style>
+{% endblock %}
+
+{% block body %}
+<div id="screen">
+    <div id="top-navigation" class="px-3 pt-1">
+        <h3 class="text-center">{% block page_title %}Page Name{% endblock %}</h3>
+        <div id="top-navigation-line2">
+            <h4>{% block user_name %}Name{% endblock %}</h4>
+            <span>
+                {% block topnav_links %}<a href=""> Search </a>
+                <form action="{{ url_for('logout') }}" method="POST" style="display:inline;">
+    <button type="submit">Logout</button>
+</form>{% endblock %}
+            </span>
+        </div>
+    </div>
+    <div id="main-body">
+        <div id="left-navigation" class="text-center">
+            {% block leftnav_links %}<a class="{{ 'active' if active_page == 'dashboard' else '' }}" href=""><i class="bi bi-house-door">  Dashboard</i></a>
+            <a href="">Treks</a>
+            <a href="">Bookings</a>{% endblock %}
+        </div>
+        <div id="right-section">
+            <div id="main-section">
+                {% block main_section %}Main Section{% endblock %}
+            </div>
+            <div id="bottom-navigation" class="px-3">{% block return_link %}<a href=""><i class="bi bi-arrow-left"></i>  Return Back</a> {% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
