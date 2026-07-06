@@ -249,3 +249,44 @@ This page contains all the business logics in plain language
 
 ---
 
+## Admin Trekker Routes
+### `admin_trekkers_page`
+**GET:**
+1. Get the admin id from the session.
+2. Fetch the details of the admin from the database.
+3. Fetch all users with role == 'trekker', sorted by name.
+4. Render admin_trekkers.html, passing the admin details and all trekkers.
+
+### `admin_trekkers_view`
+**GET:**
+1. Get the admin id from the session.
+2. Fetch the details of the admin from the database.
+3. Fetch the given trekker (User) by trekker_id from the database.
+4. If no such user exists, or the user's role is not 'trekker', show 
+   an error message.
+5. Fetch all bookings made by this trekker, grouped by status in this 
+   fixed priority order: pending, booked, initiated, completed, 
+   cancelled. Within each status group, sort by booking_date 
+   descending.
+6. Render admin_trekkers_details.html, passing the admin object, 
+   trekker object, and all_bookings list.
+
+### `admin_trekkers_blacklist`
+**POST:**
+1. Fetch the trekker (User) object using the given trekker_id.
+2. If no such user exists, or the user's role is not 'trekker', show 
+   an error message.
+3. Set is_blacklisted to True.
+4. Commit to the database.
+5. Redirect to the trekker list.
+
+### `admin_trekkers_unblacklist`
+**POST:**
+1. Fetch the trekker (User) object using the given trekker_id.
+2. If no such user exists, or the user's role is not 'trekker', show 
+   an error message.
+3. Set is_blacklisted to False.
+4. Commit to the database.
+5. Redirect to the trekker list.
+
+---

@@ -1,0 +1,55 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'trekkers_page' %}
+
+{% block page_title %}Admin Trekkers Management Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" >All Trekkers</h5>
+    </div>
+    <div class="table-responsive list-table-wrapper">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Trekker ID</th>
+                    <th>Trekker Name</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                    <th>Is Blacklisted</th>
+                    <th>Blacklist Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trekker in all_trekkers %}
+                <tr>
+                    <td><a href="{{ url_for('admin.admin_trekkers_view', trekker_id=trekker.id) }}">#{{ trekker.id }}</a></td>
+                    <td>{{ trekker.name }}</td>
+                    <td>{{ trekker.email }}</td>
+                    <td>{{ trekker.phone_number }}</td>
+                    <td>{{ trekker.is_blacklisted }}</td>
+                    <td>
+                        {% if trekker.is_blacklisted %}
+                            <form action="{{ url_for('admin.admin_trekkers_unblacklist', trekker_id=trekker.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Un-blacklist</button>
+                            </form>
+                        {% else %}
+                            <form action="{{ url_for('admin.admin_trekkers_blacklist', trekker_id=trekker.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-dark">Blacklist</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

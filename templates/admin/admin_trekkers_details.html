@@ -1,0 +1,71 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+
+{% block page_title %} Trekker Detail Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h5 class="mb-3 text-center"> #{{trekker.id }} {{ trekker.name }}</h5>
+    <div id="details">
+        {{ macros.detail_item("Trekker ID", trekker.id) }}
+        {{ macros.detail_item("Trekker Name", trekker.name) }}
+        {{ macros.detail_item("Email", trekker.email) }}
+        {{ macros.detail_item("Phone Number", trekker.phone_number) }}
+        {{ macros.detail_item("Is Blacklist", trekker.is_blacklisted) }}
+        <div class="mb-2">
+            <strong>Blacklisting Action :</strong> 
+            <span>
+                {% if trekker.is_blacklisted %}
+                    <form action="{{ url_for('admin.admin_trekkers_unblacklist', trekker_id=trekker.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">Un-blacklist</button>
+                    </form>
+                {% else %}
+                    <form action="{{ url_for('admin.admin_trekkers_blacklist', trekker_id=trekker.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-dark">Blacklist</button>
+                    </form>
+                {% endif %}
+            </span>
+        </div>
+        
+    </div>
+    
+    <h5 class="mt-3">Booking done by this trekker</h5>
+     <div>
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Trek Name</th>
+                    <th>Booking Date</th>
+                    <th>Booking Status</th>
+                    <th>Payment Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if bookings %}
+                    {% for booking in bookings %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
+                        <td><a href="{{ url_for('admin.admin_treks_view', trek_id=booking.trek_id) }}">#{{ booking.trek.id}}</a> {{ booking.trek.trekname }}</td>
+                        <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
+                        <td>{{ booking.booking_status }}</td>
+                        <td>{{ booking.payment_status }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-muted">No bookings found.</td>
+                </tr>    
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_trekkers_page') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}
