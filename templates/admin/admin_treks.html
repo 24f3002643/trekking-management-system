@@ -39,7 +39,7 @@
                     <td>{{ trek.amount }}</td>
                     <td>{{ trek.status }}</td>
                     <td>
-                        <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}"class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}" class="btn btn-sm btn-warning">Edit</a>
                         <a href="{{ url_for('admin.admin_treks_assign_staff', trek_id=trek.id) }}" class="btn btn-sm btn-info">Assign Staff</a>
                         <a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}" class="btn btn-sm btn-primary">View</a>
                         <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">

@@ -23,7 +23,7 @@
         <div class="mb-2">
             <strong>Action :</strong> 
             <span>
-                <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}"class="btn btn-sm btn-warning">Edit</a>
+                <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}" class="btn btn-sm btn-warning">Edit</a>
                 <a href="{{ url_for('admin.admin_treks_assign_staff', trek_id=trek.id) }}" class="btn btn-sm btn-info">Assign Staff</a>
                 <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">
                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
