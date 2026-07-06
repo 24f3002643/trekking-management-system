@@ -88,7 +88,7 @@ def admin_staff_reject(staff_id):
     return render_template("message.html", title="Rejected", message="The registration request of this staff has been rejected successfully.", href=url_for('admin.admin_staff_pending'), a_text='Back to Admin Staff Pending Page')
 
 
-# To submit the request tp blacklist the staff
+# To submit the request to blacklist the staff
 @admin_bp.route('/admin/staff/<staff_id>/blacklist', methods=["POST"])
 @role_required('admin')
 def admin_staff_blacklist(staff_id):
@@ -100,7 +100,7 @@ def admin_staff_blacklist(staff_id):
     return render_template("message.html", title="Blacklisted", message="The staff has been blacklisted successfully.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
 
 
-# To submit the request tp unblacklist the staff
+# To submit the request to un-blacklist the staff
 @admin_bp.route('/admin/staff/<staff_id>/unblacklist', methods=["POST"])
 @role_required('admin')
 def admin_staff_unblacklist(staff_id):
@@ -109,4 +109,4 @@ def admin_staff_unblacklist(staff_id):
         return render_template("message.html", title="No Staff Found", message="No staff with the given id exists.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
     staff.is_blacklisted = False
     db.session.commit()
-    return render_template("message.html", title="Unblacklisted", message="The staff has been unblacklisted successfully.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
+    return render_template("message.html", title="Un-blacklisted", message="The staff has been un-blacklisted successfully.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
