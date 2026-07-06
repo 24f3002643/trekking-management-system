@@ -661,3 +661,34 @@
      remove a trekker's active, paid booking).
 
 ---
+## Decision 21 : Deferred `joining_date` Attribute on `User` Table
+
+### Info
+- Date : July 6, 2026
+- Status : Deferred
+
+### Context
+- Considered adding a `joining_date` attribute to the `User` table, 
+  to record when a user (trekker or staff) originally registered.
+- Registration, seeding, and several list/detail pages were already 
+  built by this point without this field.
+
+### Decision
+- Not adding `joining_date` for now.
+
+### Reason
+- Adding it at this stage would require updating registration logic, 
+  the seed script, and any user-facing pages that would display it, 
+  for a field that isn't required by the project statement and isn't 
+  blocking any core milestone.
+
+### Impact
+- None currently. If added later, existing users would need a 
+  default/backfilled value, since the column would be new on an 
+  already-populated table.
+
+### Alternatives Considered
+- Add `joining_date` now, accepting the rework needed across 
+  registration, seeding, and templates (rejected for this stage).
+
+---

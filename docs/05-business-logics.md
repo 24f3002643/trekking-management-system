@@ -190,11 +190,13 @@ This page contains all the business logics in plain language
 1. Get the admin id from the session.
 2. Fetch the details of the admin from the database.
 3. Fetch the given staff member (User) by staff_id from the database.
-4. Fetch the treks this staff member is assigned to (via their 
+4. If no such user exists, or the user's role is not 'staff', show 
+   an error message.
+5. Fetch the treks this staff member is assigned to (via their 
    assignments relationship), grouped by status in this fixed 
    priority order: ongoing, upcoming, completed, cancelled. Within 
    each status group, sort by start_date ascending.
-5. Render admin_staff_details.html, passing the admin object, staff 
+6. Render admin_staff_details.html, passing the admin object, staff 
    object, and assigned-treks list.
 
 ### `admin_staff_pending`
@@ -235,7 +237,7 @@ This page contains all the business logics in plain language
    an error message.
 3. Set is_blacklisted to True.
 4. Commit to the database.
-5. Redirect to the staff list.
+5. Redirect to the staff pending list (or show a success message).
 
 ### `admin_staff_unblacklist`
 1. Fetch the staff (User) object using the given staff_id.
@@ -243,7 +245,7 @@ This page contains all the business logics in plain language
    an error message.
 3. Set is_blacklisted to False.
 4. Commit to the database.
-5. Redirect to the staff list.
+5. Redirect to the staff pending list (or show a success message).
 
 ---
 

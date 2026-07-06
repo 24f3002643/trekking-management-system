@@ -1,0 +1,58 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+
+
+{% block page_title %}Admin Staff Pending Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" >Pending Registration Requests</h5>
+    </div>
+    <div class="table-responsive list-table-wrapper">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Staff ID</th>
+                    <th>Staff Name</th>
+                    <th>email</th>
+                    <th>Phone Number</th>
+                    <th>Approval Status</th>
+                    <th>Approval Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_pending_staff %}
+                    {% for staff in all_pending_staff %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.admin_staff_view', staff_id=staff.id) }}">#{{ staff.id }}</a></td>
+                        <td>{{ staff.name }}</td>
+                        <td>{{ staff.email }}</td>
+                        <td>{{ staff.phone_number }}</td>
+                        <td>{{ staff.approval_status }}</td>
+                        <td>
+                                <form action="{{ url_for('admin.admin_staff_approve', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form action="{{ url_for('admin.admin_staff_reject', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-muted">Not pending staff requests.</td>
+                    </tr>    
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_staff_page') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}
