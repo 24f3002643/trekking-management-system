@@ -73,11 +73,16 @@ This page contains all the business logics in plain language
 3. If yes, then check the role, and redirect to corresponding user role 's dashboard. 
     4. Also add last else in if-else ladder, and redirect to login page.
 
+
+## Admin Routes
+
 ### `admin_dashboard`
 1. Get the admin id from the session.
 2. Fetch the details of the admin from the database.
 3. Fetch all the bookings, sorted by the descending order of booking_date.
 4. render the admin_dashboard.html by passing the admin details and all the bookings.
+
+## Admin Trek Routes
 
 ### `admin_treks_page`
 1. Get the admin id from the session.
@@ -97,7 +102,7 @@ This page contains all the business logics in plain language
 5. Also fetch the the staffs assigned on this treks.
 6. render the admin_treks_details.html by passing admin object, booking object and staff object.
 
-### admin_treks_create
+### `admin_treks_create`
 
 **GET:**
 1. Get the admin id from the session.
@@ -119,9 +124,8 @@ This page contains all the business logics in plain language
 7. Add to database session and commit.
 8. Redirect to the admin treks list page.
 
-### admin_treks_edit
 
-### admin_treks_edit
+### `admin_treks_edit`
 
 **GET:**
 1. Get the admin id from the session.
@@ -152,7 +156,7 @@ This page contains all the business logics in plain language
 12. Redirect to the admin treks list page.
 
 
-### admin_treks_delete
+### `admin_treks_delete`
 
 **POST:**
 1. Fetch the Trek object using the given trek_id from the database.
@@ -168,3 +172,78 @@ This page contains all the business logics in plain language
 7. Delete the Trek object itself.
 8. Commit to the database.
 9. Show a success message.
+
+## Admin Staff Routes
+
+
+### `admin_staff_page`
+**GET:**
+1. Get the admin id from the session.
+2. Fetch the details of the admin from the database.
+3. Fetch all users with role == 'staff', grouped by approval_status 
+   in this fixed priority order: pending, approved, rejected. Within 
+   each status group, sort by name.
+4. Render admin_staff.html, passing the admin details and all staff.
+
+### `admin_staff_view`
+**GET:**
+1. Get the admin id from the session.
+2. Fetch the details of the admin from the database.
+3. Fetch the given staff member (User) by staff_id from the database.
+4. Fetch the treks this staff member is assigned to (via their 
+   assignments relationship), grouped by status in this fixed 
+   priority order: ongoing, upcoming, completed, cancelled. Within 
+   each status group, sort by start_date ascending.
+5. Render admin_staff_details.html, passing the admin object, staff 
+   object, and assigned-treks list.
+
+### `admin_staff_pending`
+**GET:**
+1. Get the admin id from the session.
+2. Fetch the details of the admin from the database.
+3. Fetch all users with role == 'staff' and approval_status == 
+   'pending'.
+4. Render admin_staff_pending.html, passing the admin object and 
+   the pending staff list.
+
+### `admin_staff_approve`
+**POST :**
+1. Fetch the given staff member (User) by staff_id from the database.
+2. If no such user exists, or the user's role is not 'staff', show 
+   an error message.
+3. If the staff's approval_status is not 'pending', show an error 
+   message: "This staff registration is not pending approval."
+4. Set approval_status to 'approved'.
+5. Commit to the database.
+6. Redirect to the staff pending list (or show a success message).
+
+### `admin_staff_reject`
+**POST :**
+1. Fetch the given staff member (User) by staff_id from the database.
+2. If no such user exists, or the user's role is not 'staff', show 
+   an error message.
+3. If the staff's approval_status is not 'pending', show an error 
+   message: "This staff registration is not pending approval."
+4. Set approval_status to 'rejected'.
+5. Commit to the database.
+6. Redirect to the staff pending list (or show a success message).
+
+### `admin_staff_blacklist`
+**POST:**
+1. Fetch the staff (User) object using the given staff_id.
+2. If no such user exists, or the user's role is not 'staff', show 
+   an error message.
+3. Set is_blacklisted to True.
+4. Commit to the database.
+5. Redirect to the staff list.
+
+### `admin_staff_unblacklist`
+1. Fetch the staff (User) object using the given staff_id.
+2. If no such user exists, or the user's role is not 'staff', show 
+   an error message.
+3. Set is_blacklisted to False.
+4. Commit to the database.
+5. Redirect to the staff list.
+
+---
+
