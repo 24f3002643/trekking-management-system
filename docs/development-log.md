@@ -157,3 +157,62 @@
    Summary pages, following the same template-then-logic pattern.
 
 ---
+
+## July 6, 2026
+
+### Work Decisions
+1. ### Work Decisions
+1. Decided to build Admin Staff, Trekker, and Bookings management 
+   (in that order) before Search and Trek Staff Assignment — those 
+   three are simpler CRUD + blacklist/action pages, while Search and 
+   Staff Assignment need more involved logic.
+2. Route-level guard clauses (e.g. "reject only valid while pending") 
+   will be applied for state transitions with real alternative states 
+   (approve/reject/pending), but skipped for simple boolean toggles 
+   (blacklist/unblacklist), since setting an already-`True` boolean 
+   to `True` again is harmless, unlike approving an already-rejected 
+   registration.
+
+### Work Completed
+1. Admin Staff Management: list (grouped by 
+   approval_status: pending, approved, rejected; sorted by name 
+   within each group), detail (showing treks the staff member is 
+   assigned to), pending-approvals queue, and 
+   approve/reject/blacklist/unblacklist actions.
+2. Admin Trekker Management: list (sorted by name), 
+   detail (showing all bookings made by that trekker, sorted by 
+   status priority then booking date), and blacklist/unblacklist 
+   actions.
+3. Every staff/trekker action route checks both that the target 
+   `staff_id`/`trekker_id` exists AND that the matching `User` row's 
+   `role` is actually `'staff'`/`'trekker'`, since the id comes 
+   directly from the URL and could otherwise be pointed at an 
+   unrelated user.
+4. Added a reusable `.form-narrow` CSS class (`base_layout.html`) so 
+   create/edit forms can opt into a narrower width without inline 
+   styles or repeating the rule per page.
+5. Fixed several bugs surfaced while building these pages:
+   - Trek Detail's bookings table had `table-responsive`/
+     `list-table-wrapper` applied to it, which collapsed its visible 
+     height to zero on a page with multiple stacked sections; removed.
+   - The Trek Create/Edit difficulty dropdown's "Moderate" option had 
+     `value="medium"`, not matching the model's actual Enum value 
+     `'moderate'`.
+   - Leftover duplicate route stubs in the old, not-yet-fully-migrated 
+     `admin.py`, still registering alongside the real implementation 
+     in a newly split file (`admin_staff.py`, `admin_trekker.py`), 
+     causing Flask to silently run the stale stub instead of the real 
+     route..
+
+### Decisions Made
+1. Sidebar highlighting (`active_page`) is set only on a section's 
+   list page, not on that section's create/edit/detail pages, so the 
+   highlighted state specifically means "viewing the list."
+2. Deferred adding a `joining_date` attribute to `User` (see 
+   `project-decisions.md`).
+
+
+### Next Step
+1. Implement Admin Bookings (list, detail, approve/cancel).
+
+---
