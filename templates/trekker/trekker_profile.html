@@ -1,0 +1,29 @@
+{% extends "trekker/base_trekker.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'profile_page' %}
+
+{% block page_title %}Trekker Profile Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h5 class="mb-3 text-center"> Trekker Details</h5>
+    <div id="details">
+        {{ macros.detail_item("Trekker ID", this_user.id) }}
+        {{ macros.detail_item("Trekker Name", this_user.name) }}
+        {{ macros.detail_item("Email", this_user.email) }}
+        {{ macros.detail_item("Phone Number", this_user.phone_number) }}
+        <div class="mb-2">
+                <a href="{{ url_for('trekker.trekker_profile_update') }}" class="btn btn-sm btn-primary">Update Profile</a>
+        </div>
+        
+    </div>
+
+    
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for('trekker.trekker_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "trekker/base_trekker.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'treks_page' %}
+
+{% block page_title %}Trekker Trek Booking Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+        <h5 class="mb-3 text-center">Trek Booking Form</h5>
+    <div id="details">
+        {{ macros.detail_item("Trekker Name", "#" ~ this_user.id ~ " " ~ this_user.name) }}
+        {{ macros.detail_item("Trek Name", "#" ~ trek.id ~ " " ~ trek.trekname ) }}
+        {{ macros.detail_item("Location", trek.location) }}
+        {{ macros.detail_item("Start Date", trek.start_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("End Date", trek.end_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("Total Slots", trek.total_slots) }}
+        {{ macros.detail_item("Available Slots", trek.available_slots) }}
+        {{ macros.detail_item("Amount", trek.amount) }}
+        {{ macros.detail_item("Additional Info", trek.additional_info) }}
+        </div>
+    <h5 class="mt-3 mb-3 text-center">Card Details</h5>
+    <div id="form-narrow" class="mb-3">
+        <form method="POST" action="{{ url_for('trekker.trekker_treks_book', trek_id=trek.id)}}">
+            <div class="mb-3">
+                <label class="form-label" for="debit_name">Name on Debit Card</label>
+                <input type="text" class="form-control" minlength="2" maxlength="50" id="debit_name" name="debit_name" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="debit_number">Enter Your 16 Digit Debit Card Number</label>
+                <input type="text" class="form-control" id="debit_number" pattern="[0-9]{16}" minlength="16" maxlength="16" name="debit_number" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="debit_expiry">Enter Your Debit Card Expiry Date</label>
+                <input type="date" class="form-control" id="debit_expiry"  name="debit_expiry" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label" for="debit_cvv">Enter Your Debit Card CVV Number</label>
+                <input type="text" class="form-control" id="debit_cvv"  pattern="[0-9]{3}" name="debit_cvv" minlength="3" maxlength="3" required>
+            </div>
+            <div class="mb-3">
+                <button type="submit" class="btn btn-success">Pay Now</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'trekker.trekker_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

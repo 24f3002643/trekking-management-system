@@ -1,0 +1,17 @@
+{% extends "base_layout.html" %}
+
+
+{% block topnav_links %}
+<form action="{{ url_for('auth.logout') }}" method="POST" style="display:inline;">
+    <button type="submit">Logout</button>
+</form>
+{% endblock %}
+
+{% block leftnav_links %}
+<a class="{{ 'active' if active_page == 'dashboard_page' else '' }}" href="{{ url_for('trekker.trekker_dashboard') }}"><i class="bi bi-house-door"></i>  Dashboard</a>
+<a class="{{ 'active' if active_page == 'treks_page' else '' }}" href="{{ url_for('trekker.trekker_treks_page') }}"><i class="bi bi-signpost-2"></i> Browse Treks</a>
+<a class="{{ 'active' if active_page == 'bookings_page' else '' }}" href="{{ url_for('trekker.trekker_bookings_page') }}"><i class="bi bi-calendar-check"></i>  Active Bookings</a>
+<a class="{{ 'active' if active_page == 'history_page' else '' }}" href="{{ url_for('trekker.trekker_bookings_history') }}"><i class="bi bi-clock-history"></i>  Booking History</a>
+<a class="{{ 'active' if active_page == 'profile_page' else '' }}" href="{{ url_for('trekker.trekker_profile') }}"><i class="bi bi-person-circle"></i>  Profile</a>
+{% endblock %}
+

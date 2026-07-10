@@ -1,0 +1,108 @@
+{% extends "trekker/base_trekker.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'bookings_page' %}
+
+{% block page_title %}Trekker Active Bookings Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+
+        <h4 class="mb-3 text-center">My Active Bookings</h4>
+
+    <h5>Pending Booking Requests</h5>
+    <div class="table-responsive list-table-wrapper">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Trek Name</th>
+                    <th>Location</th>
+                    <th>Duration</th>
+                    <th>Difficulty</th>
+                    <th>Trek Status</th>
+                    <th>Booking Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_pending_bookings %}
+                    {% for booking in all_pending_bookings %}
+                    <tr>
+                        <td><a href="{{ url_for('trekker.trekker_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
+                        <td>#{{ booking.trek.id }} {{ booking.trek.trekname }}</td>
+                        <td>{{ booking.trek.location }}</td>
+                        <td>{{ booking.trek.start_date.strftime('%d %b %Y') }} - {{ booking.trek.end_date.strftime('%d %b %Y') }}</td>
+                        <td>{{ booking.trek.difficulty | title }}</td>
+                        <td>{{ booking.trek.status | title }}</td>
+                        <td>{{ booking.booking_status | title }}</td>
+                        <td>
+                            <a href="{{ url_for('trekker.trekker_bookings_view', booking_id=booking.id) }}" class="btn btn-sm btn-primary">View</a>
+                            <form action="{{ url_for('trekker.trekker_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-muted">
+                            No bookings are awaiting admin approval.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    <h5> Confirmed Bookings </h5>
+    <div class="table-responsive list-table-wrapper">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Trek Name</th>
+                    <th>Location</th>
+                    <th>Duration</th>
+                    <th>Difficulty</th>
+                    <th>Trek Status</th>
+                    <th>Booking Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_booked_bookings %}
+                    {% for booking in all_booked_bookings %}
+                    <tr>
+                        <td><a href="{{ url_for('trekker.trekker_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
+                        <td>#{{ booking.trek.id }} {{ booking.trek.trekname }}</td>
+                        <td>{{ booking.trek.location }}</td>
+                        <td>{{ booking.trek.start_date.strftime('%d %b %Y') }} - {{ booking.trek.end_date.strftime('%d %b %Y') }}</td>
+                        <td>{{ booking.trek.difficulty | title }}</td>
+                        <td>{{ booking.trek.status | title }}</td>
+                        <td>{{ booking.booking_status | title }}</td>
+                        <td>
+                            <a href="{{ url_for('trekker.trekker_bookings_view', booking_id=booking.id) }}" class="btn btn-sm btn-primary">View</a>
+                            <form action="{{ url_for('trekker.trekker_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-muted">
+                            No confirmed bookings.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'trekker.trekker_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

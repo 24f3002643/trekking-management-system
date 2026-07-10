@@ -1,0 +1,93 @@
+{% extends "trekker/base_trekker.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'dashboard_page' %}
+
+{% block page_title %}Trekker Dashboard{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div id="dashboard-main-content" class="mt-0">
+    <h5>Available Treks</h5>
+    <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Trek ID</th>
+                    <th>Trek Name</th>
+                    <th>Location</th>
+                    <th>Duration</th>
+                    <th>Slots (Available/Total)</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                {% for trek in all_upcoming_treks %}
+                <tr>
+                    <td><a href="{{ url_for('trekker.trekker_treks_view', trek_id=trek.id) }}">#{{ trek.id }}</a></td>
+                    <td>{{ trek.trekname }}</td>
+                    <td>{{ trek.location }}</td>
+                    <td>{{ trek.start_date.strftime('%d %b %Y') }} - {{ trek.end_date.strftime('%d %b %Y') }}</td>
+                    <td>{{ trek.available_slots}} / {{ trek.total_slots }}</td>
+                    <td>{{ trek.amount }}</td>
+                    <td>{{ trek.status | title }}</td>
+                    <td>
+                        <a href="{{ url_for('trekker.trekker_treks_book', trek_id=trek.id) }}" class="btn btn-sm btn-success">Book Now</a>
+                        <a href="{{ url_for('trekker.trekker_treks_view', trek_id=trek.id) }}" class="btn btn-sm btn-primary">View</a> 
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="text-end mt-1 me-3">
+        <a href="{{ url_for('trekker.trekker_treks_page') }}" class="">See all available Treks</a>
+    </div>
+</div>
+<div id="dashboard-main-content" class="mt-0">
+    <h5>My Active Bookings</h5>
+    <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Trek Name</th>
+                    <th>Booking Date</th>
+                    <th>Trek Status</th>
+                    <th>Booking Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in trekker_bookings %}
+                <tr>
+                    <td><a href="{{ url_for('trekker.trekker_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
+                    <td>{{ booking.trek.trekname }}</td>
+                    <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
+                    <td>{{ booking.trek.status | title }}</td>
+                    <td>{{ booking.booking_status | title }}</td>
+                    <td>
+                        <a href="{{ url_for('trekker.trekker_bookings_view', booking_id=booking.id) }}" class="btn btn-sm btn-primary">View</a>
+                        {% if booking.booking_status in ["booked", "pending"] %}
+                            <form action="{{ url_for('trekker.trekker_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="text-end mt-0 me-3">
+        <a href="{{ url_for('trekker.trekker_bookings_page') }}" class="">See all active bookings</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %} {% endblock %}

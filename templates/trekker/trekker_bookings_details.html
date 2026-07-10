@@ -1,0 +1,46 @@
+{% extends "trekker/base_trekker.html" %}
+{% import "_macros.html" as macros %}
+
+{% block page_title %}Trekker Active Bookings Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h4 class="mb-3 text-center"> #{{booking.id }} Booking</h4>
+    <div id="details">
+        <h5 class="my-3 text-decoration-underline"> Trek Info </h5>
+        {{ macros.detail_item("Trek Name", "#" ~ trek.id ~ " " ~ trek.trekname ) }}
+        {{ macros.detail_item("Location", trek.location) }}
+        {{ macros.detail_item("Start Date", trek.start_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("End Date", trek.end_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("Additional Info", trek.additional_info) }}
+
+        <h5 class="my-3 text-decoration-underline"> Booking Info </h5>
+        {{ macros.detail_item("Booking ID", booking.id) }}
+        {{ macros.detail_item("Booking Date", booking.booking_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("Booking Time", booking.booking_date.strftime("%H:%M:%S")) }}
+        {{ macros.detail_item("Amount Paid", trek.amount) }}
+        {{ macros.detail_item("Booking Status", booking.booking_status | title) }}
+        {{ macros.detail_item("Payment Status", booking.payment_status | title) }}
+        {{ macros.detail_item("Additional Information", booking.additional_info) }}
+        <div class="mb-2">
+            <strong> Action :</strong> 
+            <span>
+                {% if booking.booking_status in ["booked", "pending"] %}
+                    <form action="{{ url_for('trekker.trekker_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                    </form>
+                {% else%}
+                    No Action Required
+                {% endif %}   
+            </span>
+        </div>
+    </div>
+        
+    </div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'trekker.trekker_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}
