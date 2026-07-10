@@ -1,0 +1,73 @@
+{% extends "staff/base_staff.html" %}
+{% import "_macros.html" as macros %}
+
+{% block page_title %}Staff Trek Update Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h4 class="mb-3 text-center"> Staff Trek Update Form</h4>
+    <div class="form-narrow">
+        <form action="{{ url_for('staff.staff_treks_slots', trek_id=trek.id) }}" method="post">
+            <h5 class="my-3">Treks Details</h5>
+            <div class="mb-3">
+                <label for="id" class="form-label">Trek ID</label>
+                <input type="text" id="id" class="form-control" name="id" value="{{ trek.id }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="trekname" class="form-label">Trek Name</label>
+                <input type="text" id="trekname" class="form-control" name="trekname" value="{{ trek.trekname }}" maxlength="50" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="location" class="form-label">Location</label>
+                <input type="text" id="location" class="form-control" name="location" maxlength="50" value="{{ trek.location }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="difficulty" class="form-label">Difficulty</label>
+                <input type="text" id="difficulty" class="form-control" name="difficulty"  value="{{ trek.difficulty }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" id="start_date" class="form-control" name="start_date" value="{{ trek.start_date.strftime('%Y-%m-%d') }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" id="end_date" class="form-control" name="end_date" value="{{ trek.end_date.strftime('%Y-%m-%d') }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="amount" class="form-label">Amount (Rs.)</label>
+                <input type="number" id="amount" class="form-control" name="amount" value="{{ trek.amount }}" min="0" step="0.01" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="additional_info" class="form-label">Additional Information</label>
+                <textarea class="form-control" id="additional_info" name="additional_info" rows="4" disabled>{{ trek.additional_info }}</textarea>
+            </div>
+            
+            <h5 class="my-3">Slots Information</h5>
+            <div class="mb-3">
+                <label for="total_slots" class="form-label">Total Slots</label>
+                <input type="number" id="total_slots" class="form-control" name="total_slots" min="1" value="{{ trek.total_slots }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="available_slots" class="form-label">Available Slots</label>
+                <input type="number" id="available_slots" class="form-control" name="available_slots" min="1" value="{{ trek.available_slots }}" disabled>
+            </div>
+            <div class="mb-3">
+                <label for="new_total_slots" class="form-label">New Total Slots</label>
+                <input type="number" id="new_total_slots" class="form-control" name="new_total_slots" min="1" value="{{ trek.total_slots }}" required>
+            </div>
+            <div class="text-center mb-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Save Changes to the Trek
+                </button>
+            </div>
+        </form>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block return_link %} <a href="{{ url_for( 'staff.staff_treks_page') }}"><i class="bi bi-arrow-left"></i>  Return Back</a> {% endblock %}

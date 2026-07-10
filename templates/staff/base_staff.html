@@ -1,0 +1,16 @@
+{% extends "base_layout.html" %}
+
+
+{% block topnav_links %}
+<form action="{{ url_for('auth.logout') }}" method="POST" style="display:inline;">
+    <button type="submit">Logout</button>
+</form>
+{% endblock %}
+
+{% block leftnav_links %}
+<a class="{{ 'active' if active_page == 'dashboard_page' else '' }}" href="{{ url_for('staff.staff_dashboard') }}"><i class="bi bi-house-door"></i>  Dashboard</a>
+<a class="{{ 'active' if active_page == 'treks_page' else '' }}" href="{{ url_for('staff.staff_treks_page') }}"><i class="bi bi-signpost-2"></i>  Assigned Treks</a>
+<a class="{{ 'active' if active_page == 'trekkers_page' else '' }}" href="{{ url_for('staff.staff_trekkers_page') }}"><i class="bi bi-people"></i>  Participants</a>
+<a class="{{ 'active' if active_page == 'profile_page' else '' }}" href="{{ url_for('staff.staff_profile') }}"><i class="bi bi-person-circle"></i>  Profile</a>
+{% endblock %}
+

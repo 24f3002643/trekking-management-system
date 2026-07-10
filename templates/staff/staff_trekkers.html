@@ -1,0 +1,70 @@
+{% extends "staff/base_staff.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'trekkers_page' %}
+
+{% block page_title %}Staff Assigned Treks Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-center">
+
+        <h5 class="mb-0">All Registered Participants</h5>
+
+        <form class="d-flex gap-2" method="GET" action="{{ url_for('staff.staff_trekkers_page') }}">
+            <input type="text" class="form-control form-control-sm" name="trekkername" placeholder="Trekker Name" value="{{ request.args.get('trekkername', '') }}">
+            <input type="text" class="form-control form-control-sm" name="trekname" placeholder="Trek Name" value="{{ request.args.get('trekname', '') }}">
+            <select name="status" class="form-select form-select-sm">
+                <option value="">Trek Status</option>
+                <option value="ongoing" {% if request.args.get('status') == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                <option value="upcoming" {% if request.args.get('status') == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
+                <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+            </select>
+            <button class="btn btn-sm btn-primary" type="submit">Search</button>
+            <a href="{{ url_for('staff.staff_trekkers_page') }}" class="btn btn-sm btn-secondary">Clear</a>
+        </form>
+    </div>
+    <div class="table-responsive list-table-wrapper">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Trekker ID</th>
+                    <th>Trekker Name</th>
+                    <th>Trek Name</th>
+                    <th>Booking ID</th>
+                    <th>Booking Date</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_trekkers %}
+                    {% for trekker, booking, trek in all_trekkers %}
+                    <tr>
+                        <td>{{ trekker.id }}</td>
+                        <td>{{ trekker.name }}</td>
+                        <td><a href="{{ url_for('staff.staff_treks_view', trek_id=trek.id) }}">#{{ trek.id }} </a>{{ trek.trekname }}</td>
+                        <td>{{ booking.id }}</td>
+                        <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
+                        <td>{{ trekker.email }}</td>
+                        <td>{{ trekker.phone_number }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-muted">
+                            No trekker has booked this trek yet.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %} <a href="{{ url_for( 'staff.staff_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a> {% endblock %}

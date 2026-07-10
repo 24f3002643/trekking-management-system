@@ -1,0 +1,89 @@
+{% extends "staff/base_staff.html" %}
+{% import "_macros.html" as macros %}
+\
+
+{% block page_title %}Staff Assigned Treks Details Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h5 class="mb-3 text-center"> #{{trek.id}} {{ trek.trekname }}</h5>
+    <div id="details">
+        {{ macros.detail_item("Trek ID", trek.id) }}
+        {{ macros.detail_item("Trek Name", trek.trekname) }}
+        {{ macros.detail_item("Location", trek.location) }}
+        {{ macros.detail_item("Start Date", trek.start_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("End Date", trek.end_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("Total Slots", trek.total_slots) }}
+        {{ macros.detail_item("Available Slots", trek.available_slots) }}
+        {{ macros.detail_item("Amount", trek.amount) }}
+        {{ macros.detail_item("Additional Info", trek.additional_info) }}
+        <div class="mb-2">
+            <strong>Action :</strong> 
+            <span>
+                <a href="{{ url_for('staff.staff_treks_slots', trek_id=trek.id)  }}" class="btn btn-sm btn-info">Update Slots</a>
+                {% if trek.status == "upcoming" and today >= trek.start_date %}
+                    <form action="{{ url_for('staff.staff_treks_ongoing', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-success">Start</button>
+                    </form>
+                {% endif %}
+                {% if trek.status == "ongoing" and today >= trek.start_date %}
+                    <form action="{{ url_for('staff.staff_treks_completed', trek_id=trek.id)  }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">Close</button>
+                    </form>
+                {% endif %}
+                {% if (trek.status == "ongoing") and (today >= trek.start_date) and (today <= trek.end_date) %}
+                    <form action="{{ url_for('staff.staff_treks_cancelled', trek_id=trek.id)  }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-warning">Cancel</button>
+                    </form>
+                {% endif %}
+                
+                        
+            </span>
+        </div>
+        
+    </div>
+    
+    <h5 class="mt-3">Participants in this Trek</h5>
+    <div>
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Trekker ID</th>
+                    <th>Trekker Name</th>
+                    <th>Email</th>
+                    <th>Phone Number</th>
+                    <th>Booking ID</th>
+                    <th>Booking Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_assigned_trekkers %}
+                    {% for assigned_trekker, booking in all_assigned_trekkers %}
+                    <tr>
+                        <td>{{ assigned_trekker.id }}</td>
+                        <td>{{ assigned_trekker.name }}</td>
+                        <td>{{ assigned_trekker.email }}</td>
+                        <td>{{ assigned_trekker.phone_number }}</td>
+                        <td>{{ booking.id }}</td>
+                        <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-muted">No trekker has booked this trek yet.</td>
+                </tr>    
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+    
+    
+</div>
+{% endblock %}
+
+{% block return_link %} <a href="{{ url_for( 'staff.staff_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a> {% endblock %}

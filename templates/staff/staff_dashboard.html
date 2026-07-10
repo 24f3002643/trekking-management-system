@@ -1,0 +1,85 @@
+{% extends "staff/base_staff.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'dashboard_page' %}
+
+{% block page_title %}Staff Dashboard{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div id="dashboard-top-content" >
+    <h5 class="mb-3">Quick Overview</h5>
+    <div class="row g-3">
+        {{ macros.stat_card('Total Assigned Treks', all_assigned_treks | length, 'signpost-2') }}
+        {{ macros.stat_card('Total Participants', total_participants, 'people') }}
+        {{ macros.stat_card('Ongoing Treks', total_ongoing_treks, 'activity') }}
+        {{ macros.stat_card('Upcoming Treks', total_upcoming_treks, 'calendar-event') }}
+    </div>
+</div>
+<div id="dashboard-main-content">
+    <h5>Assigned Treks</h5>
+    <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Trek</th>
+                    <th>Trek Name</th>
+                    <th>Location</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Registered Trekkers</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if all_assigned_treks %}
+                    {% for trek in all_assigned_treks %}
+                    <tr>
+                        <td><a href="{{ url_for('staff.staff_treks_view', trek_id=trek.id) }}">#{{ trek.id }}</a></td>
+                        <td>{{ trek.trekname }}</td>
+                        <td>{{ trek.location }}</td>
+                        <td>{{ trek.start_date.strftime("%d %b %Y") }}</td>
+                        <td>{{ trek.end_date.strftime("%d %b %Y") }}</td>
+                        <td>{{ trek_participant_counts.get(trek.id, 0) }}</td>
+                        <td>{{ trek.status | title }}</td>
+                        <td>
+                            <a href="{{ url_for('staff.staff_treks_slots', trek_id=trek.id)  }}" class="btn btn-sm btn-info">Update Slots</a>
+                            {% if trek.status == "upcoming" and today >= trek.start_date %}
+                                <form action="{{ url_for('staff.staff_treks_ongoing', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-success">Start</button>
+                                </form>
+                            {% endif %}
+                            {% if trek.status == "ongoing" and today >= trek.start_date %}
+                                <form action="{{ url_for('staff.staff_treks_completed', trek_id=trek.id)  }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Close</button>
+                                </form>
+                            {% endif %}
+                            {% if (trek.status == "ongoing") and (today >= trek.start_date) and (today <= trek.end_date) %}
+                                <form action="{{ url_for('staff.staff_treks_cancelled', trek_id=trek.id)  }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-warning">Cancel</button>
+                                </form>
+                            {% endif %}
+                                <a href="{{ url_for('staff.staff_treks_view', trek_id=trek.id)  }}" class="btn btn-sm btn-primary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-muted">
+                            No confirmed bookings.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    <div class="text-end mt-3 me-3">
+        <a href="{{ url_for('staff.staff_treks_page') }}" class="">See all assigned treks</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %} {% endblock %}
