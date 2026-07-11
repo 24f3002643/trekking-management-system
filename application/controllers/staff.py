@@ -85,76 +85,7 @@ def staff_treks_view(trek_id):
     all_assigned_trekkers = db.session.query(User, Booking).join(Booking, User.id==Booking.user_id).filter(Booking.trek_id==trek_id, Booking.booking_status=="booked").order_by(User.name.asc()).all()
     return render_template('staff/staff_treks_details.html', today=today, this_user=this_user, trek=trek, all_assigned_trekkers=all_assigned_trekkers)
 
-
-# To view and update the details of a particular trek assigned to staff
-@staff_bp.route('/staff/treks/<trek_id>/update', methods=["GET", "POST"])
-@role_required('staff')
-def staff_treks_update(trek_id):
-    if request.method == "GET":
-        id = session.get('user_id')
-        this_user = User.query.get(id)
-        staff_assigned = StaffTrekAssignment.query.filter_by(user_id=id, trek_id=trek_id).first()
-        if staff_assigned is None:
-            return render_template("message.html", title="Not Allowed", message="You are not allowrd to update this trek.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks Assigned')
-        trek = Trek.query.get(trek_id)
-        if trek is None:
-            return render_template("message.html", title="Not Found", message="Trek not found.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-        if trek.status != "ongoing":
-            return render_template("message.html", title="Not Allowed", message="Trek is not 'ongoing'. It can only be updated, if the trek is 'ongoing'", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-        return render_template('staff/staff_treks_update.html', this_user=this_user, trek=trek)
-    
-    if request.method == "POST":
-        id = session.get('user_id')
-        this_user = User.query.get(id)
-        staff_assigned = StaffTrekAssignment.query.filter_by(user_id=id, trek_id=trek_id).first()
-        if staff_assigned is None:
-            return render_template("message.html", title="Not Allowed", message="You are not allowed to update this trek.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks Assigned')
-        trek = Trek.query.get(trek_id)
-        if trek is None:
-            return render_template("message.html", title="Not Found", message="Trek not found.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-        if trek.status != "ongoing":
-            return render_template("message.html", title="Not Allowed", message="Trek is not 'ongoing'. It can only be updated, if the trek is 'ongoing'", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-        status = request.form.get("status")
-        total_slots = int(request.form.get("total_slots"))
-        if status not in ["ongoing", "cancelled", "completed"]:
-            return render_template("message.html", title="Incorrect Value", message="Wrong input values.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')            
-
-        if status == "cancelled":
-            trek.status = "cancelled"
-            all_active_bookings = Booking.query.filter(Booking.trek_id == trek_id, Booking.booking_status.in_(["initiated", "pending", "booked"])).all()
-            for booking in all_active_bookings:
-                booking.booking_status = "cancelled"
-                if booking.payment_status == "paid":
-                    booking.payment_status = "refunded"
-                elif booking.payment_status == "pending":
-                    booking.payment_status = "cancelled"
-            db.session.commit()
-            return render_template("message.html", title="Successful", message="Trek has been cancelled, and all the active associated bookings are cancelled. ", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-
-        if status == "completed":
-            trek.status = "completed"
-            all_active_bookings = Booking.query.filter(Booking.trek_id == trek_id, Booking.booking_status.in_(["initiated", "pending", "booked"])).all()
-            for booking in all_active_bookings:
-                if booking.booking_status in ["pending", "initiated"]:
-                    booking.booking_status = "cancelled"  
-                    if booking.payment_status == "paid":
-                        booking.payment_status = "refunded"
-                    elif booking.payment_status == "pending":
-                        booking.payment_status = "cancelled"
-                elif booking.booking_status == "booked":
-                    booking.booking_status = "completed"
-            db.session.commit()
-            return render_template("message.html", title="Successful", message="Trek has been completed, and all the active associated bookings are completed. ", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-
-        if status == "ongoing":
-            booked = trek.total_slots - trek.available_slots
-            if total_slots < booked:
-                return render_template("message.html", title="Error", message="This trek already has more bookings than the new requested total slots. Cancel the trek, if the trek cannot proceed with the current bookings.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-            trek.total_slots = total_slots
-            trek.available_slots = total_slots - booked
-            db.session.commit()
-            return render_template("message.html", title="Successful", message="Total Slot of this trek has been updated successfully. ", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
-        
+      
 # To view all the participants assigned to this staff
 @staff_bp.route('/staff/trekkers', methods=["GET"])
 @role_required('staff')

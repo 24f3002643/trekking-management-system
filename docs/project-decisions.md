@@ -158,7 +158,10 @@
 
 ### Info
 - Date : June 26, 2026 to June 28, 2026
-- Status : Current
+- Status : **Superseded by Decision 25** (booking and payment merged 
+  into a single step; `initiated` state removed; `payment_status` 
+  simplified to `paid`/`refunded`). Kept below for historical record 
+  of the original design.
 
 ### Context
 - `Booking` table has the following two attributes with their values :
@@ -580,7 +583,9 @@
 
 ### Info
 - Date : July 5, 2026
-- Status : Current
+- Status : **Superseded by Decision 26** (trek status is now manually 
+  controlled by Trek Staff, not auto-computed from dates). Kept below 
+  for historical record of the original design.
 
 ### Context
 - `Trek.status` should reflect `upcoming`, `ongoing`, or `completed` 
@@ -690,5 +695,660 @@
 ### Alternatives Considered
 - Add `joining_date` now, accepting the rework needed across 
   registration, seeding, and templates (rejected for this stage).
+
+---
+
+## Decision 22 : Deferred Splitting `booking_status = 'cancelled'` 
+
+### Info
+- Date : July 6, 2026
+- Status : Deferred
+
+### Context
+- A single 'cancelled' value in booking_status doesn't distinguish 
+  why or by whom a booking was cancelled (trekker cancelling 
+  themselves, admin rejecting a pending request, admin cancelling an 
+  already-approved booking).
+- Considered splitting this into 'admin_rejected', 'admin_cancelled', 
+  and 'trekker_cancelled' for clearer history.
+
+### Decision
+- Not implementing this split for now.
+
+### Reason
+- The database design and most business logic were already 
+  finalized by the time this was considered. The change would touch 
+  the Enum definition, every route checking booking_status, the 
+  status_order sorting logic on multiple pages, and the seed script — 
+  a large, disruptive change for a refinement rather than a required 
+  feature.
+
+### Impact
+- Cancelled bookings do not currently record who cancelled them or 
+  why, beyond what's implied by which route was called at the time.
+
+### Alternatives Considered
+- Implement the three-value split now (rejected: too disruptive at 
+  this stage).
+
+  --- 
+
+## Decision 23 : Trek Participants Shown on Trek Detail Page, Not a Separate Route
+
+### Info
+- Date : July 7, 2026
+- Status : Current
+
+### Context
+- The routes doc originally specified a separate 
+  `/staff/treks/<trek_id>/participants` route for staff to view 
+  trekkers registered for their assigned trek.
+- The Admin Trek Detail page already shows both assigned staff and 
+  bookings for that trek on one page, without needing separate routes.
+
+### Decision
+- Trek participants for a staff member's assigned trek will be shown 
+  directly on `staff_treks_view` (the trek detail page), not as a 
+  separate route/page.
+
+### Reason
+- Consistent with the existing Admin Trek Detail pattern.
+- Avoids an extra click for information a staff member would 
+  naturally want to see alongside the trek's own details.
+- The routes doc only specifies read-only viewing, with no indication 
+  participants need their own filtering or actions that would justify 
+  a separate page.
+
+### Impact
+- `GET /staff/treks/<trek_id>/participants` is dropped from 
+  02-routes.md; no `staff_treks_trekkers` route/template needed.
+
+### Alternatives Considered
+- Keep the separate route and template as originally planned 
+  (rejected: redundant given the merged detail-page pattern already 
+  used elsewhere).
+
+---
+
+## Decision 24 : Added `'cancelled'` to `Booking.payment_status`
+
+### Info
+- Date : July 7, 2026
+- Status : **Superseded by Decision 25** (booking and payment are now 
+  merged into a single step, so a booking is never created before 
+  payment succeeds — the "cancelled before any payment was made" case 
+  this decision addressed can no longer occur, and `payment_status` 
+  has been simplified back to two values: `paid`/`refunded`). Kept 
+  below for historical record.
+
+### Context
+- A booking can be cancelled before any payment was made 
+  (booking_status = 'initiated', payment_status = 'pending'). The 
+  existing payment_status values ('pending', 'paid', 'refunded') have 
+  no accurate value for this case — 'refunded' implies money was 
+  returned, which is false if no payment was ever made.
+
+### Decision
+- Added 'cancelled' as a fourth value for payment_status, used 
+  specifically when a booking is cancelled while payment_status was 
+  still 'pending'.
+
+### Reason
+- 'refunded' would be factually incorrect for a booking that was 
+  cancelled before any payment occurred.
+
+### Impact
+- payment_status is now: pending, paid, refunded, cancelled.
+- trekker_treks_cancel sets payment_status = 'cancelled' if it was 
+  'pending', or 'refunded' if it was 'paid'.
+
+### Alternatives Considered
+- Use 'refunded' for both cases regardless of whether payment was 
+  actually made (rejected: factually inaccurate).
+
+---
+
+## Decision 25 : Booking and Payment Merged Into a Single Step; `initiated` State Removed
+
+### Info
+- Date : July 8, 2026
+- Status : Current
+- Supersedes: Decision 6, Decision 24.
+
+### Context
+- The original design (Decision 6) created a `Booking` row immediately 
+  when a trekker clicked "Book Now", with `booking_status = 'initiated'` 
+  and `payment_status = 'pending'`, then redirected to a separate 
+  payment page. Only after payment did the row become 
+  `booking_status = 'pending'`, `payment_status = 'paid'`.
+- This caused real problems in practice:
+  - An `'initiated'` booking already decremented `available_slots`, 
+    even though no payment had been made — a trekker who abandoned 
+    the payment step still occupied a slot.
+  - Treks could show as unavailable (slots exhausted) despite no 
+    actual payment ever being completed.
+  - The `'initiated'` state existed purely to represent an incomplete 
+    transaction, adding a state, a route, and a template for no 
+    functional benefit.
+  - Decision 24 (adding `payment_status = 'cancelled'`) existed only 
+    to handle cancelling a booking in this incomplete `'initiated'` 
+    state — once that state is removed, the problem it solved no 
+    longer exists.
+
+### Decision
+- Booking and payment are merged into a single trekker-facing action.
+- The trek booking form (`trekker_treks_book`, GET) directly collects 
+  dummy card details alongside a summary of the trek — there is no 
+  separate `trekker_treks_payment` route or page anymore.
+- On successful form submission (`trekker_treks_book`, POST):
+  - card fields are checked only for presence (dummy payment, per 
+    Decision 17), not real validation,
+  - a `Booking` row is created directly with `booking_status = 
+    'pending'` and `payment_status = 'paid'`,
+  - `available_slots` is decremented at this point, not earlier.
+- No `Booking` row is ever created before payment succeeds. There is 
+  no representation of an abandoned/incomplete booking attempt in the 
+  database at all.
+- `booking_status` is reduced to four values: `pending`, `booked`, 
+  `completed`, `cancelled`. `'initiated'` is removed.
+- `payment_status` is reduced to two values: `paid`, `refunded`. 
+  `'pending'` and `'cancelled'` (from Decision 24) are removed, since 
+  a booking is never created while payment is outstanding.
+
+### Reason
+- Every `Booking` row now represents a real, paid reservation — there 
+  is no window where a slot is held without payment.
+- Removes an entire state, its associated route/template, and the 
+  bookkeeping needed to handle abandoned `'initiated'` rows.
+- `admin_bookings_approve`/`reject` still operate on `'pending'` 
+  bookings exactly as before (Decision 6's approval workflow, i.e. 
+  `pending → booked`, is unchanged) — only the pre-payment part of 
+  the lifecycle was removed.
+
+### Impact
+- `trekker_treks_payment` route and its template no longer exist.
+- `models.py`: `Booking.booking_status` Enum is now 
+  `('pending', 'booked', 'cancelled', 'completed')`; 
+  `Booking.payment_status` Enum is now `('paid', 'refunded')`.
+- `seed.py` updated to only generate bookings in these four/two 
+  states, consistent with the new lifecycle.
+- Any code that previously checked `booking_status == 'initiated'` or 
+  `payment_status == 'pending'`/`'cancelled'` is dead logic and has 
+  been removed.
+
+### Alternatives Considered
+1. Keep the two-step flow but auto-expire/clean up abandoned 
+   `'initiated'` bookings after a timeout (rejected: needs background 
+   job infrastructure the project doesn't otherwise use).
+2. Keep the two-step flow, but don't decrement `available_slots` 
+   until payment succeeds (rejected: still leaves an unnecessary 
+   extra state and route for no real benefit, given this is a dummy 
+   payment system with no real gateway latency to justify a separate 
+   step).
+
+---
+
+## Decision 26 : Trek Status Manually Controlled by Trek Staff, Not Auto-Computed
+
+### Info
+- Date : July 8, 2026
+- Status : Current
+- Supersedes: Decision 19.
+
+### Context
+- Decision 19 recomputed `Trek.status` automatically from 
+  `start_date`/`end_date` whenever a trek was fetched, with 
+  `'cancelled'` as the only manually-set value.
+- The Project Statement's Core Features section describes Trek Staff 
+  as able to "mark trek as started/completed" — language that reads 
+  as a deliberate staff action, not a background computation. The 
+  Milestone doc separately lists "Update trek status (Open/Closed)" 
+  and "Mark treks as started/ongoing/completed" the same way.
+- Automatic recomputation also had a real weakness: status could go 
+  stale until a trek happened to be fetched again, since the project 
+  has no scheduler.
+
+### Decision
+- `upcoming`, `ongoing`, and `completed` are now all staff-triggered 
+  actions, not automatic. `start_date`/`end_date` remain as *guards* 
+  on when a transition is permitted, but nothing changes `Trek.status` 
+  automatically anymore.
+- Full transition table:
+
+| From | To | Who | Guard |
+|------------|-------------|----------------|--------------------------------------------|
+| upcoming | ongoing | Staff | Blocked if `today < start_date` |
+| ongoing | completed | Staff | none |
+| ongoing | cancelled | Staff or Admin | Blocked if `today > end_date` |
+| upcoming | cancelled | Admin only | none |
+| upcoming | completed | — | Never allowed (must pass through `ongoing`) |
+| any | cancelled | — | Blocked once `today > end_date`, regardless of who |
+
+- `refresh_trek_status()` (introduced in Decision 19) is removed from 
+  `utilities.py`, along with every call site.
+
+### Reason
+- Matches the project's own wording of staff "marking" a trek's phase, 
+  rather than the system inferring it.
+- Removes a real correctness gap (staleness) by removing the need for 
+  automatic computation entirely, rather than trying to patch it with 
+  scheduler infrastructure out of scope for this project.
+- Admin retaining cancel power (in addition to staff) reflects that 
+  cancellation is a policy-level decision (e.g. low bookings, permit 
+  issues) that doesn't require physical presence at the trek, unlike 
+  starting/completing a trek, which only staff on the ground can 
+  meaningfully attest to.
+
+### Impact
+- `staff_treks_update` supports three transitions: `upcoming → 
+  ongoing`, `ongoing → completed`, `ongoing → cancelled`.
+- A new admin-only route is added for cancelling a trek from either 
+  `upcoming` or `ongoing` (see Decision 27).
+- `admin_treks_edit` gains a new restriction (see Decision 28).
+- No safety net exists if staff is late to act — see Decision 29.
+
+### Alternatives Considered
+1. Keep automatic computation for `upcoming → ongoing`, and only add 
+   manual staff control for `completed`/`cancelled` (rejected: still 
+   doesn't match the "mark as started" wording, and keeps the 
+   staleness weakness for the one transition being kept automatic).
+2. Add a real scheduler/background job to keep automatic computation 
+   accurate (rejected: infrastructure out of scope for this project).
+
+---
+
+## Decision 27 : Cancellation and Completion Cascades on Bookings
+
+### Info
+- Date : July 8, 2026
+- Status : Current
+
+### Context
+- Under Decision 26, a trek's status can now be set to `cancelled` or 
+  `completed` by staff (or, for cancellation, by admin). Existing 
+  bookings on that trek need a consistent, defined outcome when this 
+  happens.
+
+### Decision
+- **When a trek becomes `cancelled`** (by staff or admin, from either 
+  `upcoming` or `ongoing`): every booking on that trek with 
+  `booking_status` in (`pending`, `booked`) is set to 
+  `booking_status = 'cancelled'`, `payment_status = 'refunded'` 
+  (since, under Decision 25, every existing booking was already paid).
+- **When a trek becomes `completed`** (staff only, from `ongoing`): 
+  every booking with `booking_status == 'booked'` is set to 
+  `booking_status = 'completed'`.
+- A booking added a new admin-only route for cancelling a trek 
+  directly (`POST /admin/treks/<trek_id>/cancel`), applying the same 
+  cancellation cascade described above, and enforcing the same guard 
+  as staff's cancel action (blocked once `today > end_date`).
+
+### Reason
+- Keeps `Booking.booking_status` synchronized with the trek's own 
+  status change, rather than leaving stale `pending`/`booked` rows on 
+  a trek that no longer exists in an active state.
+- Refunding on cancellation is correct and unambiguous now that every 
+  booking is guaranteed paid (Decision 25 removed the unpaid case 
+  entirely).
+
+### Impact
+- `staff_treks_update` and the new admin cancel-trek route share this 
+  cascade logic.
+- `02-routes.md` needs the new admin cancel-trek route added.
+
+### Alternatives Considered
+- Leave existing bookings untouched when a trek's status changes, 
+  requiring a separate manual step to resolve them (rejected: leaves 
+  the database in an inconsistent state with no forcing function to 
+  fix it).
+
+---
+
+## Decision 28 : Admin Cannot Edit a Trek Once It Leaves `'upcoming'`
+
+### Info
+- Date : July 8, 2026
+- Status : Current
+
+### Context
+- `admin_treks_edit` previously had no restriction based on 
+  `Trek.status` — only a guard preventing `total_slots` from being 
+  reduced below the number of already-booked slots.
+- Under Decision 26, `Trek.status` is now the authoritative signal for 
+  what phase a trek is in.
+
+### Decision
+- `admin_treks_edit` (both the GET form and the POST submission) is 
+  blocked entirely once `Trek.status != 'upcoming'`.
+
+### Reason
+- Once a trek is `ongoing`, `completed`, or `cancelled`, retroactively 
+  changing its name, location, difficulty, dates, or amount would be 
+  editing details trekkers already booked and paid against.
+- Gating on `Trek.status` (rather than comparing `today` against 
+  `start_date`) keeps a single, consistent source of truth for "what 
+  phase is this trek in," matching Decision 26 and Decision 29 (no 
+  date-based booking cutoff either) rather than introducing a second, 
+  date-based rule just for this one route.
+
+### Impact
+- A trek can still be edited while `'upcoming'`, even past its actual 
+  `start_date`, if staff hasn't yet clicked "Start Trek" — consistent 
+  with treating `status`, not raw dates, as authoritative everywhere.
+
+### Alternatives Considered
+- Block editing based on `today >= start_date` instead of 
+  `Trek.status` (rejected: introduces a second, inconsistent 
+  authority for "has this trek started" alongside Decision 26's 
+  status-based model).
+
+---
+
+## Decision 29 : No Date-Based Safety Net for Trekker Booking
+
+### Info
+- Date : July 8, 2026
+- Status : Current
+
+### Context
+- Under Decision 26, `Trek.status` no longer changes automatically. If 
+  Trek Staff is late to mark a trek `'ongoing'`, the trek could 
+  technically remain `'upcoming'` past its real `start_date`.
+- A question arose: should trekker booking additionally check 
+  `today < start_date` as a safety net, blocking bookings on a trek 
+  whose start date has passed even if staff hasn't updated its status 
+  yet?
+
+### Decision
+- No additional date-based check is added. Trekker booking 
+  (`trekker_treks_book`, and visibility on `trekker_treks_page`/
+  `trekker_dashboard`) is gated purely on `Trek.status == 'upcoming'`.
+
+### Reason
+- Keeps a single, consistent authority (`Trek.status`) for "is this 
+  trek bookable," matching Decision 26 and Decision 28, rather than 
+  half-automating one specific path with a second, date-based rule.
+- Trek Staff is assumed to act diligently and mark a trek `'ongoing'` 
+  promptly once it starts.
+
+### Impact
+- Accepted, known risk: if staff is late to act, a trek could remain 
+  bookable past its actual start date. This is a deliberate 
+  simplification, not an oversight.
+
+### Alternatives Considered
+- Block booking once `today >= start_date`, regardless of 
+  `Trek.status` (rejected: introduces a second, date-based authority 
+  alongside `Trek.status`, contradicting Decision 26's single-source- 
+  of-truth model).
+
+---
+
+## Decision 30 : Admin Given Full Trek-Status Power (Not Cancel-Only)
+
+### Info
+- Date : July 7-11, 2026
+- Status : Current
+- Supersedes: the earlier "admin: cancel only" scoping discussed
+  during the trek-status-workflow redesign.
+
+### Context
+- When designing manual trek-status control (Decision 26), the
+  initial plan was for Admin to hold cancel-only power, on the
+  reasoning that starting/completing a trek are ground-truth facts
+  only physically-present Trek Staff can honestly attest to.
+- On reflection, this was reconsidered: the admin is the owner of the
+  business, and structurally excluding them from any operational
+  lever — even one they'd normally defer to staff for in practice —
+  was judged too restrictive.
+
+### Decision
+- Admin now holds the full set of trek-status actions: mark
+  `ongoing`, mark `completed`, and cancel — the same three actions
+  Trek Staff has, each as its own dedicated POST route
+  (`admin_treks_ongoing`, `admin_treks_completed`,
+  `admin_treks_cancelled`), mirroring Staff's route shape exactly.
+- All the same guards apply to Admin's routes as to Staff's: `ongoing`
+  blocked if `today < start_date`; `completed` only reachable from
+  `ongoing`; cancellation blocked once `today > end_date`.
+- The one retained asymmetry: Admin's cancel scope is wider than
+  Staff's — Admin can cancel from EITHER `upcoming` or `ongoing`,
+  while Staff can only cancel from `ongoing` (see Decision 31).
+
+### Reason
+- An owner should not be structurally locked out of any lever, even
+  if they would normally defer to on-ground staff in practice.
+- This is purely additive — Trek Staff's own routes and powers are
+  completely unchanged.
+
+### Impact
+- Three new admin routes added; no changes to Staff's existing
+  routes.
+- `invariants.md`'s Trek section updated to reflect Admin as a valid
+  actor for all three status transitions, not just cancellation.
+
+### Alternatives Considered
+- Keep Admin cancel-only, as originally planned (rejected: judged
+  overly restrictive for the actual business owner of the
+  application).
+
+---
+
+## Decision 31 : Trek Staff's Cancel Power Restricted to `ongoing` Only
+
+### Info
+- Date : July 7-11, 2026
+- Status : Current
+
+### Context
+- Following Decision 30, it was worth explicitly settling why Trek
+  Staff's cancel scope should NOT also extend to `upcoming`, even
+  though Admin's does.
+
+### Decision
+- Trek Staff can only cancel a trek while its status is `ongoing`.
+  Staff cannot cancel an `upcoming` trek at all — that action belongs
+  to Admin only.
+
+### Reason
+- Staff's cancel power exists specifically to handle ground
+  emergencies (accidents, dangerous weather, unsafe terrain) — by
+  definition, these only arise once a trek is actually underway.
+- Cancelling a trek before it starts is a business/administrative
+  decision (low bookings, permit denial, insufficient staff) that
+  doesn't require ground presence, and is Admin's call, not Staff's.
+
+### Impact
+- `staff_treks_cancelled` explicitly rejects `trek.status ==
+  'upcoming'` with an error, even though the trek-level invariant
+  otherwise permits cancellation from either state depending on actor.
+
+### Alternatives Considered
+- Give Staff the same wide cancel scope as Admin (rejected: staff has
+  no operational role at all before a trek starts, so pre-start
+  cancellation power for staff would be functionally meaningless and
+  inconsistent with why staff has cancel power in the first place).
+
+---
+
+## Decision 32 : Booking and Payment Merged Into a Single Step (Final)
+
+### Info
+- Date : July 7-11, 2026
+- Status : Current
+- Supersedes: the original two-step booking/payment design and any
+  intermediate 4-value `payment_status` decisions made while that
+  two-step design was still assumed.
+
+### Context
+- The original design created a `Booking` row immediately when a
+  trekker clicked "Book Now" (`booking_status = 'initiated'`,
+  `payment_status = 'pending'`), then redirected to a separate payment
+  page. Only on successful payment did the row become `'pending'`/
+  `'paid'`.
+- This caused real problems: an `'initiated'` booking already
+  decremented `available_slots`, even though no payment had been made
+  — a trekker who abandoned the payment step still occupied a slot,
+  and treks could appear unavailable despite no completed payment
+  ever existing.
+
+### Decision
+- Booking and payment are merged into one trekker-facing action. The
+  trek booking page (`trekker_treks_book`, GET) shows trek details
+  alongside a dummy card-payment form on ONE page. POST checks card
+  fields for presence only (dummy payment, no real gateway), then
+  creates the `Booking` row directly with `booking_status = 'pending'`,
+  `payment_status = 'paid'`, decrementing `available_slots` at this
+  point.
+- No `Booking` row is ever created before payment succeeds.
+- `booking_status` is reduced to 4 values: `pending`, `booked`,
+  `cancelled`, `completed`. `'initiated'` is removed.
+- `payment_status` is reduced to 2 values: `paid`, `refunded`. Any
+  earlier plan to add a `'pending'` or `'cancelled'` value to
+  `payment_status` is moot, since a booking can no longer exist in an
+  unpaid state at all.
+
+### Reason
+- Every `Booking` row now represents a real, paid reservation — no
+  window exists where a slot is held without payment.
+- Removes an entire state, its associated route (`trekker_treks_
+  payment`), and its template, along with all the bookkeeping needed
+  to handle abandoned `'initiated'` rows.
+- The existing admin approval workflow (`pending → booked`) is
+  completely unchanged — only the pre-payment part of the lifecycle
+  was removed.
+
+### Impact
+- `trekker_treks_payment` route and template no longer exist.
+- `models.py` updated: `Booking.booking_status` Enum is
+  `('pending', 'booked', 'cancelled', 'completed')`;
+  `Booking.payment_status` Enum is `('paid', 'refunded')`.
+- `seed.py` updated to only generate bookings in these states.
+
+### Alternatives Considered
+- Keep the two-step flow but auto-expire abandoned `'initiated'`
+  bookings after a timeout (rejected: needs background-job
+  infrastructure out of scope for this project).
+- Keep the two-step flow but delay decrementing `available_slots`
+  until payment succeeds (rejected: still leaves an unnecessary extra
+  state and route for a dummy payment system with no real gateway
+  latency to justify a separate step).
+
+---
+
+## Decision 33 : Admin Search — Both a Dedicated Page AND Inline Filters
+
+### Info
+- Date : July 7-11, 2026
+- Status : Current
+
+### Context
+- `02-routes.md` originally specified a single dedicated
+  `GET /admin/search` page (with `type`/`field`/`q` query parameters)
+  as the sole way to search treks/staff/trekkers by name or ID. It was
+  worth reconsidering whether the four existing admin list pages
+  (Treks/Staff/Trekkers/Bookings) should ALSO have their own inline
+  filter forms, given the trekker side of the app already used inline
+  query-parameter filtering on its own list pages.
+
+### Decision
+- Both were built: the single dedicated `/admin/search` page (matching
+  the original route design, searching across all three entity types
+  from one place), AND inline filter forms directly on each of the
+  four admin list pages.
+
+### Reason
+- The dedicated search page matches the milestone requirement's
+  phrasing ("search treks, staff, or users by name or ID") as one
+  unified capability.
+- Inline filters on each list page let admin narrow down what they're
+  already looking at without navigating away, which the dedicated page
+  alone doesn't offer.
+
+### Impact
+- No route conflicts — the dedicated search page and each list page's
+  inline filters are independent, additive features.
+
+### Alternatives Considered
+- Only the dedicated search page (rejected: doesn't let admin filter
+  a list page they're already viewing without navigating away).
+
+---
+
+## Decision 34 : Admin Summary Charts Built with Matplotlib, Saved as Plain Files
+
+### Info
+- Date : July 7-11, 2026
+- Status : Current
+
+### Context
+- The Admin Summary/Analytics page needed charts. The Milestone doc
+  names Chart.js as a suggested (optional) library, which would
+  require JavaScript. Given the project's broader preference for
+  avoiding JS wherever not strictly required, and the need to be able
+  to explain every part of the implementation clearly in the viva, an
+  alternative was chosen.
+
+### Decision
+- All 6 summary charts are generated server-side with matplotlib.
+  Each chart-drawing function saves its output as a plain `.png` file
+  to a fixed path inside `static/charts/` (e.g.
+  `static/charts/top_treks.png`), overwriting the same file every time
+  the summary page is loaded. The template displays each chart with a
+  completely ordinary `<img src="{{ url_for('static', filename=
+  'charts/top_treks.png') }}">` tag — no JavaScript, no base64
+  encoding, no in-memory tricks.
+
+### Reason
+- This keeps the mechanism trivial to explain in a viva: "matplotlib
+  draws the chart and saves it as a picture file; the page just shows
+  that picture, and the file gets redrawn fresh every time the page
+  loads."
+- Avoids JS entirely, consistent with the project's broader
+  preference for plain, well-understood HTML/CSS/Python wherever
+  possible.
+
+### Impact
+- `application/charts.py` added, with one function per chart. Each
+  uses `matplotlib.use("Agg")` (required — Flask has no display/GUI)
+  and calls `plt.close(fig)` after saving, to avoid a memory leak
+  across repeated page loads.
+- `static/charts/` must exist (or be created) before first use.
+
+### Alternatives Considered
+- Chart.js (rejected: introduces JavaScript, and is harder to walk an
+  examiner through live compared to "a Python function draws a picture
+  and saves it").
+- In-memory base64-encoded images, avoiding any file writes to disk
+  (rejected after initial implementation: harder to explain in a viva
+  than simply saving and referencing a plain image file).
+
+---
+
+## Decision 35 : `Booking.additional_info` — Verify Final Presence
+
+### Info
+- Date : July 7-11, 2026
+- Status : Open / needs final verification before submission.
+
+### Context
+- Earlier drafts of `models.py` during this project included a
+  `Booking.additional_info` column. The final schema reviewed at the
+  end of this development phase does not include it. It's unclear
+  whether this was a deliberate removal or an incidental omission.
+
+### Decision
+- Not yet made. Before final submission, confirm:
+  (a) whether any route or template still references
+      `booking.additional_info`, and
+  (b) whether the column should be re-added or those references
+      removed.
+
+### Reason
+- A dangling reference to a non-existent column would cause a runtime
+  `AttributeError` wherever it's used, if any such reference remains.
+
+### Impact
+- Pending — to be resolved before final submission.
 
 ---

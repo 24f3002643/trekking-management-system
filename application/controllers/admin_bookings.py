@@ -100,6 +100,7 @@ def admin_bookings_reject(booking_id):
     if booking.booking_status != "pending":
         return render_template("message.html", title="Payment Not Done", message="Payment is pending for this booking.", href=url_for('admin.admin_bookings_page'), a_text='Back to Admin Bookings Page')        
     booking.booking_status = "cancelled"
+    booking.payment_status = "refunded"
     db.session.commit()
     return render_template("message.html", title="Booking Rejected", message="Booking has been successfully rejected .", href=url_for('admin.admin_bookings_page'), a_text='Back to Admin Bookings Page')
 
@@ -113,5 +114,6 @@ def admin_bookings_cancel(booking_id):
     if booking.booking_status != "booked":
         return render_template("message.html", title="Not Booked", message="This booking is not approved by  the admin.", href=url_for('admin.admin_bookings_page'), a_text='Back to Admin Bookings Page')        
     booking.booking_status = "cancelled"
+    booking.payment_status = "refunded"
     db.session.commit()
     return render_template("message.html", title="Booking Rejected", message="Booking has been successfully cancelled .", href=url_for('admin.admin_bookings_page'), a_text='Back to Admin Bookings Page')

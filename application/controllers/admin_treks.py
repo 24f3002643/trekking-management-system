@@ -5,7 +5,6 @@ from application.decorators import role_required
 from application.controllers.admin_bp import admin_bp
 from decimal import Decimal
 from datetime import date
-from application.utilities import refresh_trek_status
 
 
 # ================= Admin-Treks Route ==============================

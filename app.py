@@ -48,8 +48,7 @@ if __name__ == "__main__":
             db.session.add(admin)
             db.session.commit()
 
-        from application.seed import seed_dummy_data, assign_dummy_staff_to_treks
+        from application.seed import seed_dummy_data
         seed_dummy_data()
-        assign_dummy_staff_to_treks()
 
     app.run()

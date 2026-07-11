@@ -216,3 +216,139 @@
 1. Implement Admin Bookings (list, detail, approve/cancel).
 
 ---
+
+## July 7, 2026 to July 11, 2026
+
+### Work Decisions
+1. Booking and payment, previously two separate steps (create booking
+   as `initiated`/`pending`, then a separate payment page), were
+   merged into a single combined step: the trek booking page shows
+   trek details alongside a dummy card-payment form, and a `Booking`
+   row is only ever created after that form is submitted. The
+   `initiated` booking state was removed entirely, and
+   `payment_status` was simplified from a planned 4-value enum back
+   down to 2 values (`paid`/`refunded`).
+2. Trek status (`upcoming`/`ongoing`/`completed`/`cancelled`) was
+   changed from automatic, date-based computation
+   (`refresh_trek_status()`) to fully manual control by Trek Staff and
+   Admin. This reverses the earlier automatic-recomputation design,
+   on the reasoning that the Project Statement's "mark trek as
+   started/completed" language implies a deliberate staff action, not
+   background computation, and automatic computation had a real
+   staleness weakness (status could go stale until a trek happened to
+   be re-fetched, since the project has no scheduler).
+3. Admin was given the SAME status-change powers as Trek Staff
+   (mark ongoing, mark completed, cancel) rather than cancel-only
+   power, on the reasoning that the admin, as business owner, should
+   not be structurally excluded from any operational lever — even
+   though Trek Staff (being physically present) remains the more
+   natural authority for confirming a trek has actually started or
+   finished. The one retained asymmetry: Trek Staff can only cancel a
+   trek while it is `ongoing` (ground emergencies only arise once a
+   trek is underway), while Admin can cancel from either `upcoming` or
+   `ongoing` (a policy-level decision that doesn't require ground
+   presence).
+4. No date-based safety net was added for trekker booking — booking
+   remains gated purely on `Trek.status == 'upcoming'`, trusting Trek
+   Staff to mark a trek `ongoing` promptly. This keeps `status` as the
+   single source of truth throughout the system, rather than
+   introducing a second, date-based check for one specific path.
+5. Trek editing (`admin_treks_edit`) and staff assignment
+   (`admin_treks_manage_staff`) were both restricted to only being
+   permitted while a trek's status is `upcoming`, for the same
+   single-source-of-truth reasoning.
+6. Staff-editable slot capacity is `total_slots`, not
+   `available_slots` (the latter is a derived bookkeeping value and
+   should never be edited directly). The new value must not drop
+   below the currently booked count; if it would, the request is
+   rejected with a message suggesting cancellation instead of any
+   automatic cascade.
+7. Admin's Summary/Analytics page was built using matplotlib, saving
+   each chart as a plain `.png` file into `static/charts/` (overwritten
+   on every page load) rather than any base64/in-memory encoding
+   approach, specifically so the mechanism stays simple enough to
+   explain in the project viva.
+8. Admin search was built as BOTH a single dedicated `/admin/search`
+   page (matching the original `02-routes.md` design) AND inline
+   filter forms directly on each of the Treks/Staff/Trekkers/Bookings
+   list pages, rather than choosing one approach over the other.
+
+### Work Completed
+1. Reworked the entire trekker booking flow: `trekker_treks_book`
+   (combined trek-details + dummy-payment form), removing the earlier
+   separate `trekker_treks_payment` route/template entirely.
+2. Split trekker's bookings view into two separate routes/templates:
+   `trekker_bookings_page` (active — bookings on `upcoming`/`ongoing`
+   treks) and `trekker_bookings_history` (past — bookings on
+   `completed`/`cancelled` treks), each with its own filter form.
+3. Added trekker profile view and update (`trekker_profile`,
+   `trekker_profile_update`), including optional password change with
+   current-password verification and new/confirm matching.
+4. Implemented the full Trek Staff role from scratch:
+   - Dashboard with assigned-treks table (including a per-trek
+     registered-trekker count, defined strictly as
+     `booking_status == 'booked'`), plus quick-stat cards.
+   - Trek list and trek detail (participant list, same `'booked'`-only
+     definition).
+   - Three dedicated status-change routes (`..._ongoing`,
+     `..._completed`, `..._cancelled`), each with its own guard
+     conditions per the transition table in `invariants.md`.
+   - `staff_treks_slots` for total_slots adjustment.
+   - `staff_trekkers_page`, a cross-trek view of every trekker across
+     all of a staff member's assigned treks.
+   - Staff profile view and update, same shape as trekker's.
+5. Implemented Admin's parallel status-change routes
+   (`admin_treks_ongoing`, `admin_treks_completed`,
+   `admin_treks_cancelled`), and the new `admin_treks_edit` status
+   guard.
+6. Implemented `admin_treks_manage_staff` (GET/POST): builds a
+   three-state staff list (assigned / available / unavailable due to
+   date overlap) per trek, with full server-side re-validation on
+   POST and all-or-nothing rejection if any newly-added staff member
+   fails validation.
+7. Implemented `admin_search` and inline filter forms on the four
+   admin list pages.
+8. Implemented `admin_summary`: 4 stat cards + 6 matplotlib charts
+   (Top 10 Popular Treks, Bookings in the Past 7 Days, Pending vs
+   Booked, Staff Approval Status, Trekker Blacklist Split, Staff
+   Blacklist Split), added `application/charts.py` to house the chart
+   -generation functions.
+9. Fixed numerous bugs surfaced during this phase across `staff.py`,
+   `trekker.py`, `trekker_bookings.py`, and `admin_treks.py` — most
+   commonly: `=` used instead of `==` inside `.filter()`/`.join()`
+   calls (real Python syntax errors), `.filter_by()` misused with
+   `.in_()`, missing `is None` checks before attribute access on a
+   query result, duplicate route registrations on the same URL,
+   string/int type mismatches on form field values, and missing
+   de-duplication when counting distinct trekkers across a one-to-many
+   join.
+10. Updated `models.py`: `Booking.booking_status` reduced to
+    `('pending', 'booked', 'cancelled', 'completed')`; 
+    `Booking.payment_status` reduced to `('paid', 'refunded')`.
+    `refresh_trek_status()` in `utilities.py` removed (or marked for
+    removal), along with every call site.
+
+### Decisions Made
+1. `Booking.additional_info` — verify whether this column still
+   exists in the current schema; some in-progress drafts included it,
+   the final schema reviewed at the end of this phase did not. Needs
+   an explicit final check before submission (see Next Steps).
+2. Route naming for status-change actions was unified between Staff
+   and Admin blueprints (`..._ongoing`, `..._completed`,
+   `..._cancelled`), so the same action has matching route-name
+   suffixes regardless of which role's blueprint it lives in.
+
+### Next Step
+1. Verify whether `/staff/treks/<trek_id>/update` (an older route,
+   `staff_treks_update`) is still live/used alongside the newer
+   `/staff/treks/<trek_id>/slots` — resolve or remove whichever is
+   redundant.
+2. Confirm `trekker_treks_book`'s POST explicitly sets
+   `booking_status = 'pending'` rather than relying on any column
+   default.
+3. Final review pass: `03-views-and-flows.md` against the actual final
+   templates; confirm `.gitignore` excludes `.venv/`, `instance/`,
+   `__pycache__/`, `.env`; run through the manual testing checklist
+   end-to-end; final commit and push.
+
+---

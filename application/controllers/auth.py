@@ -43,7 +43,7 @@ def login():
             if this_user.approval_status == "pending" :
                 return render_template('message.html', title='Registration Pending', message='Your request for registration is not approved by admin yet. Try login in after some time.', href=url_for( 'auth.login' ), a_text='Return to Login Page')
             if this_user.approval_status == "rejected" :
-                return render_template('message.html', title='Registration Rejected', message='Your request for registration is rejected by the admin yet.', href=url_for( 'auth.login' ), a_text='Return to Login Page')
+                return render_template('message.html', title='Registration Rejected', message='Your request for registration is rejected by the admin.', href=url_for( 'auth.login' ), a_text='Return to Login Page')
             if this_user.approval_status == "approved" :
                 if this_user.is_blacklisted :
                     return render_template('message.html', title='Blacklisted', message='You have been blacklisted by the admin.', href=url_for( 'auth.login' ), a_text='Return to Login Page')

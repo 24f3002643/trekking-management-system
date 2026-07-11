@@ -3,12 +3,34 @@ Seed script for local debugging.
 
 Usage (in app.py, inside `with app.app_context():` block, after db.create_all()):
 
-    from application.seed import seed_dummy_data, assign_dummy_staff_to_treks
+    from application.seed import seed_dummy_data
     seed_dummy_data()
-    assign_dummy_staff_to_treks()
+
+Notes
+-----
+- Trek status is NEVER derived from dates automatically (per invariants.md #6),
+  so each trek's status below is set explicitly and its dates are chosen to be
+  *consistent* with that status (e.g. an 'ongoing' trek has start_date in the
+  past and end_date in the future), as if an admin/staff had manually
+  transitioned it at the right time.
+- Bookings are seeded to reflect a plausible history relative to each trek's
+  current status (invariants.md, Booking section):
+    * upcoming treks  -> pending / booked bookings (still paid, still active)
+    * ongoing treks   -> booked bookings only (they were 'booked' before the
+                         trek started; nothing has completed yet)
+    * completed treks -> booked -> completed, and any leftover pending ->
+                         cancelled + refunded (invariant Booking #9)
+    * cancelled treks -> every pending/booked booking is cancelled + refunded
+                         (invariant Booking #8); no active bookings remain
+  available_slots is derived to stay consistent with active (pending/booked)
+  bookings on each trek (invariant Trek #5: never negative).
+- Staff assignments are only created for 'upcoming' treks (invariant Trek #8),
+  using only approved, non-blacklisted staff (invariant StaffTrekAssignment
+  #5), and a staff member is never assigned to two overlapping treks
+  (invariant StaffTrekAssignment #3).
+- All trekkers and staff use the same password: "password".
 """
 
-import random
 from datetime import date, datetime, timedelta
 from werkzeug.security import generate_password_hash
 
@@ -16,17 +38,7 @@ from application.database import db
 from application.models import *
 
 
-TREKKER_NAMES = [
-    "Aditi Sharma", "Rohan Mehta", "Sneha Iyer", "Karan Verma", "Priya Nair",
-    "Arjun Reddy", "Neha Kapoor", "Vikram Singh", "Ananya Rao", "Rahul Gupta",
-    "Ishita Joshi", "Manish Chandra", "Divya Menon", "Siddharth Rao", "Pooja Malhotra"
-]
-
-STAFF_NAMES = [
-    "Amit Kumar", "Ravi Shankar", "Sunita Devi", "Manoj Tiwari", "Kavita Bhatt",
-    "Deepak Yadav", "Anjali Saxena", "Suresh Pillai", "Meera Krishnan", "Rajesh Nair",
-    "Vinay Kumar", "Shalini Desai", "Naveen Reddy", "Geeta Sharma", "Ashok Pandey"
-]
+PASSWORD = "password"
 
 TREK_NAMES = [
     "Everest Base Camp",
@@ -39,11 +51,6 @@ TREK_NAMES = [
     "Har Ki Dun",
     "Triund Trek",
     "Kashmir Great Lakes",
-    "Rupin Pass",
-    "Goecha La",
-    "Sandakphu Trek",
-    "Brahmatal Trek",
-    "Pin Parvati Pass"
 ]
 
 LOCATIONS = [
@@ -53,288 +60,257 @@ LOCATIONS = [
     "Ladakh",
     "Sikkim",
     "Kashmir",
-    "Meghalaya",
-    "Arunachal Pradesh"
+    "Uttarakhand",
+    "Himachal Pradesh",
+    "Kashmir",
+    "Ladakh",
 ]
 
 DIFFICULTIES = [
-    "easy",
-    "moderate",
-    "hard"
+    "moderate", "hard", "easy", "moderate", "easy",
+    "hard", "moderate", "moderate", "easy", "hard",
 ]
 
-DUMMY_EMAIL_PREFIX = "dummy_"
-DUMMY_PASSWORD = "password123"
 
+def seed_dummy_data():
 
-def seed_dummy_data(
-    num_trekkers=15,
-    num_staff=15,
-    num_treks=15,
-    num_bookings=15,
-):
-
-    existing = User.query.filter(
-        User.email.like(f"{DUMMY_EMAIL_PREFIX}%")
-    ).first()
-
+    existing = User.query.filter(User.email == "trekker1@example.com").first()
     if existing:
         print("Dummy data already exists — skipping.")
         return
 
-    password_hash = generate_password_hash(DUMMY_PASSWORD)
+    password_hash = generate_password_hash(PASSWORD)
 
-    # ---------------- Trekkers ----------------
+    # ---------------- Trekkers (10 total, 3 blacklisted) ----------------
+    # approval_status is NULL for trekkers (invariant: User #3)
 
-    trekkers = []
+    trekker_blacklist_flags = [
+        True, True, True,  # trekker1, trekker2, trekker3 -> blacklisted
+        False, False, False, False, False, False, False,
+    ]
 
-    for i in range(1, num_trekkers + 1):
-
+    for i in range(1, 11):
         trekker = User(
-            name=f"{TREKKER_NAMES[(i-1)%len(TREKKER_NAMES)]} {i}",
-            email=f"{DUMMY_EMAIL_PREFIX}trekker{i}@example.com",
+            name=f"Trekker {i}",
+            email=f"trekker{i}@example.com",
             password_hash=password_hash,
             phone_number=f"90000{i:05d}",
             role="trekker",
             approval_status=None,
-            is_blacklisted=random.choice(
-                [False, False, False, True]
-            )
+            is_blacklisted=trekker_blacklist_flags[i - 1],
         )
-
-        trekkers.append(trekker)
         db.session.add(trekker)
 
-    # ---------------- Staff ----------------
+    # ---------------- Staff (10 total) ----------------
+    # 2 blacklisted, 2 unapproved (pending), 1 rejected, rest approved & clean
+    # approval_status is meaningful for staff (invariant: User #3)
 
-    staff_members = []
+    # staff1, staff2 -> blacklisted (approved, but blacklisted)
+    # staff3, staff4 -> pending (unapproved)
+    # staff5         -> rejected
+    # staff6-10      -> approved, not blacklisted
 
-    for i in range(1, num_staff + 1):
+    staff_config = {
+        1: ("approved", True),
+        2: ("approved", True),
+        3: ("pending", False),
+        4: ("pending", False),
+        5: ("rejected", False),
+        6: ("approved", False),
+        7: ("approved", False),
+        8: ("approved", False),
+        9: ("approved", False),
+        10: ("approved", False),
+    }
 
+    for i in range(1, 11):
+        approval_status, is_blacklisted = staff_config[i]
         staff = User(
-            name=f"{STAFF_NAMES[(i-1)%len(STAFF_NAMES)]} {i}",
-            email=f"{DUMMY_EMAIL_PREFIX}staff{i}@example.com",
+            name=f"Staff {i}",
+            email=f"staff{i}@example.com",
             password_hash=password_hash,
             phone_number=f"91000{i:05d}",
             role="staff",
-            approval_status=random.choice(
-                ["approved", "approved", "approved", "pending", "rejected"]
-            ),
-            is_blacklisted=random.choice(
-                [False, False, False, True]
-            )
+            approval_status=approval_status,
+            is_blacklisted=is_blacklisted,
         )
-
-        staff_members.append(staff)
         db.session.add(staff)
 
     db.session.commit()
 
-    # ---------------- Treks ----------------
-
-    treks = []
+    # ---------------- Treks (10 total, mixed statuses) ----------------
+    # Dates are chosen to be consistent with the manually-set status,
+    # per invariant Trek #6 (status is never auto-derived from dates).
 
     today = date.today()
 
-    for i in range(1, num_treks + 1):
+    # (status, start_offset_days, end_offset_days)
+    # upcoming  -> both dates in the future
+    # ongoing   -> start in the past, end in the future
+    # completed -> both dates in the past
+    # cancelled -> mix of upcoming-cancelled (future dates) and
+    #              ongoing-cancelled (start past, end future) cases,
+    #              but never past-end-date (invariant Trek #6 last bullet)
+    trek_plan = [
+        ("upcoming",   10, 20),   # 1
+        ("upcoming",   15, 25),   # 2
+        ("upcoming",   30, 40),   # 3
+        ("ongoing",    -3, 5),    # 4
+        ("ongoing",    -5, 2),    # 5
+        ("completed", -30, -20),  # 6
+        ("completed", -15, -5),   # 7
+        ("cancelled",  20, 30),   # 8  (was upcoming, admin cancelled)
+        ("cancelled",  -2, 6),    # 9  (was ongoing, cancelled for ground emergency)
+        ("upcoming",    7, 14),   # 10
+    ]
 
-        start = today + timedelta(
-            days=random.randint(-30, 60)
-        )
+    treks = []  # keep references (with real ids) for bookings/assignments below
 
-        end = start + timedelta(
-            days=random.randint(3, 12)
-        )
+    for i in range(1, 11):
+        status, start_offset, end_offset = trek_plan[i - 1]
+        start = today + timedelta(days=start_offset)
+        end = today + timedelta(days=end_offset)
 
-        if end < today:
-            trek_status = "completed"
-
-        elif start <= today <= end:
-            trek_status = "ongoing"
-
-        else:
-            trek_status = "upcoming"
-
-        total_slots = random.randint(10, 50)
+        total_slots = 10 + i  # 11..20, varied but simple
 
         trek = Trek(
-            trekname=f"{TREK_NAMES[(i-1)%len(TREK_NAMES)]} {i}",
-            location=random.choice(LOCATIONS),
-            difficulty=random.choice(DIFFICULTIES),
+            trekname=f"{TREK_NAMES[i - 1]}",
+            location=LOCATIONS[i - 1],
+            difficulty=DIFFICULTIES[i - 1],
             total_slots=total_slots,
-            available_slots=total_slots,
-            status=trek_status,
+            available_slots=total_slots,  # corrected below once bookings exist
+            status=status,
             start_date=start,
             end_date=end,
-            amount=round(random.uniform(5000, 25000), 2),
-            additional_info=f"A wonderful trekking experience through {TREK_NAMES[(i-1)%len(TREK_NAMES)]}."
+            amount=round(5000 + i * 1500.0, 2),
+            additional_info=f"A guided trekking experience through {TREK_NAMES[i - 1]}.",
         )
-
-        treks.append(trek)
         db.session.add(trek)
+        treks.append(trek)
 
-    db.session.commit()
+    db.session.commit()  # flush so trek.id is populated
 
     # ---------------- Bookings ----------------
+    # trekker4..trekker10 are clean (not blacklisted) and used for bookings.
+    # trekker1-3 are blacklisted and deliberately given NO bookings, since a
+    # blacklisted trekker cannot log in / book (invariant User #6).
 
-    created = set()
+    clean_trekkers = User.query.filter(
+        User.role == "trekker",
+        User.is_blacklisted == False,  # noqa: E712
+    ).order_by(User.id.asc()).all()  # trekker4..trekker10 (7 trekkers)
 
-    while len(created) < num_bookings:
+    now = datetime.now()
 
-        trekker = random.choice(trekkers)
-        trek = random.choice(treks)
+    # trek index (1-based, matches trek_plan) -> list of (trekker_offset, booking_status)
+    # trekker_offset indexes into clean_trekkers (0-based)
+    booking_plan = {
+        # upcoming treks: mix of pending (awaiting admin review) and booked
+        1: [(0, "booked"), (1, "pending")],
+        2: [(2, "booked")],
+        3: [(3, "pending"), (4, "booked")],
+        10: [(5, "pending")],
 
-        # One booking per trek per trekker
-        if (trekker.id, trek.id) in created:
-            continue
+        # ongoing treks: only 'booked' (nothing pending -- once a trek is
+        # underway, any earlier pending request has already been resolved
+        # to booked or cancelled by the admin)
+        4: [(6, "booked"), (0, "booked")],
+        5: [(1, "booked")],
 
-        created.add((trekker.id, trek.id))
+        # completed treks: booked -> completed, leftover pending -> cancelled+refunded
+        # (invariant Booking #9)
+        6: [(2, "completed"), (3, "completed"), (4, "cancelled")],
+        7: [(5, "completed"), (6, "cancelled")],
 
-        # Booking status depends on trek status
-        if trek.status == "completed":
-            booking_status = random.choice(
-                ["completed", "cancelled"]
+        # cancelled treks: everything must be cancelled + refunded
+        # (invariant Booking #8 -- these were booked/pending before the trek
+        # itself got cancelled)
+        8: [(0, "cancelled"), (1, "cancelled")],
+        9: [(2, "cancelled")],
+    }
+
+    for trek_index, entries in booking_plan.items():
+        trek = treks[trek_index - 1]
+
+        for trekker_offset, booking_status in entries:
+            trekker = clean_trekkers[trekker_offset % len(clean_trekkers)]
+
+            payment_status = "refunded" if booking_status == "cancelled" else "paid"
+
+            booking = Booking(
+                user_id=trekker.id,
+                trek_id=trek.id,
+                booking_date=now - timedelta(days=3),
+                booking_status=booking_status,
+                payment_status=payment_status,
             )
-
-        elif trek.status in ["upcoming", "ongoing"]:
-            booking_status = random.choice(
-                ["pending", "booked", "cancelled"]
-            )
-
-        else:
-            booking_status = "cancelled"
-
-        if booking_status == "cancelled":
-            payment_status = "refunded"
-        else:
-            payment_status = "paid"
-
-        booking = Booking(
-            user_id=trekker.id,
-            trek_id=trek.id,
-            booking_date=datetime.now() - timedelta(
-                days=random.randint(0, 45)
-            ),
-            booking_status=booking_status,
-            payment_status=payment_status,
-            additional_info=None
-        )
-
-        db.session.add(booking)
+            db.session.add(booking)
 
     db.session.commit()
 
-    # ---------------- Update Available Slots ----------------
+    # ---------------- Recompute available_slots ----------------
+    # Only 'pending' and 'booked' bookings occupy a slot (invariant Trek #5,
+    # Booking #3). 'completed' and 'cancelled' bookings free the slot back up.
 
     for trek in treks:
-
         active_bookings = Booking.query.filter(
             Booking.trek_id == trek.id,
-            Booking.booking_status.in_(
-                ["pending", "booked"]
-            )
+            Booking.booking_status.in_(["pending", "booked"]),
         ).count()
+        trek.available_slots = max(0, trek.total_slots - active_bookings)
 
-        trek.available_slots = max(
-            0,
-            trek.total_slots - active_bookings
-        )
+    db.session.commit()
+
+    # ---------------- Staff assignments ----------------
+    # Only for 'upcoming' treks (invariant Trek #8), only approved &
+    # non-blacklisted staff (invariant StaffTrekAssignment #5), and never two
+    # overlapping treks for the same staff member (invariant #3).
+    # Eligible staff here: staff6..staff10 (approved, not blacklisted).
+
+    eligible_staff = User.query.filter(
+        User.role == "staff",
+        User.approval_status == "approved",
+        User.is_blacklisted == False,  # noqa: E712
+    ).order_by(User.id.asc()).all()
+
+    upcoming_treks = [t for t in treks if t.status == "upcoming"]
+    upcoming_treks.sort(key=lambda t: t.start_date)
+
+    # staff.id -> list of (start_date, end_date) already assigned
+    schedule = {staff.id: [] for staff in eligible_staff}
+
+    def overlaps(a_start, a_end, b_start, b_end):
+        return a_start <= b_end and a_end >= b_start
+
+    # Deliberate rotation: try to assign 2 staff per upcoming trek, skipping
+    # anyone whose existing assignment would overlap this trek's dates.
+    for idx, trek in enumerate(upcoming_treks):
+        assigned_count = 0
+        for offset in range(len(eligible_staff)):
+            staff = eligible_staff[(idx + offset) % len(eligible_staff)]
+
+            conflict = any(
+                overlaps(trek.start_date, trek.end_date, s, e)
+                for s, e in schedule[staff.id]
+            )
+            if conflict:
+                continue
+
+            db.session.add(StaffTrekAssignment(user_id=staff.id, trek_id=trek.id))
+            schedule[staff.id].append((trek.start_date, trek.end_date))
+            assigned_count += 1
+
+            if assigned_count == 2:
+                break
 
     db.session.commit()
 
     print(
-        f"Seeded {num_trekkers} trekkers, "
-        f"{num_staff} staff, "
-        f"{num_treks} treks and "
-        f"{num_bookings} bookings."
+        "Seeded 10 trekkers (3 blacklisted: trekker1-3), "
+        "10 staff (2 blacklisted: staff1-2, 2 pending: staff3-4, "
+        "1 rejected: staff5, 5 approved & clean: staff6-10), "
+        "10 treks (4 upcoming, 2 ongoing, 2 completed, 2 cancelled), "
+        "a mix of bookings consistent with each trek's status, and "
+        "staff assignments on upcoming treks (non-overlapping, approved "
+        "staff only)."
     )
-
-def assign_dummy_staff_to_treks(
-    min_staff_per_trek=5,
-    max_staff_per_trek=8,
-):
-    """
-    Assign approved staff to treks.
-
-    A staff member cannot be assigned to overlapping treks.
-    """
-
-    if StaffTrekAssignment.query.first():
-        print("Staff assignments already exist — skipping.")
-        return
-
-    approved_staff = User.query.filter_by(
-        role="staff",
-        approval_status="approved",
-        is_blacklisted=False,
-    ).all()
-
-    treks = Trek.query.order_by(
-        Trek.start_date.asc()
-    ).all()
-
-    # staff_id -> list of (start_date, end_date)
-    schedule = {
-        staff.id: []
-        for staff in approved_staff
-    }
-
-    for trek in treks:
-
-        available_staff = []
-
-        for staff in approved_staff:
-
-            overlap = False
-
-            for start, end in schedule[staff.id]:
-
-                if trek.start_date <= end and trek.end_date >= start:
-                    overlap = True
-                    break
-
-            if not overlap:
-                available_staff.append(staff)
-
-        if not available_staff:
-            continue
-
-        upper = min(
-            max_staff_per_trek,
-            len(available_staff)
-        )
-
-        lower = min(
-            min_staff_per_trek,
-            upper
-        )
-
-        count = random.randint(
-            lower,
-            upper
-        )
-
-        selected_staff = random.sample(
-            available_staff,
-            count
-        )
-
-        for staff in selected_staff:
-
-            assignment = StaffTrekAssignment(
-                user_id=staff.id,
-                trek_id=trek.id,
-            )
-
-            db.session.add(assignment)
-
-            schedule[staff.id].append(
-                (
-                    trek.start_date,
-                    trek.end_date
-                )
-            )
-
-    db.session.commit()
-
-    print("Dummy staff assignments created.")

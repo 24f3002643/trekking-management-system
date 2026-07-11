@@ -47,7 +47,6 @@ class Booking(db.Model):
     #db.func.now() calls the database NOW() function to get the current timestamp.
     booking_status = db.Column(db.Enum('pending','booked', 'cancelled', 'completed'), nullable=False, default='booked')
     payment_status = db.Column(db.Enum('paid', 'refunded'), nullable=False, default='paid')
-    additional_info = db.Column(db.String(250))
     trekker = db.relationship('User', back_populates='bookings')
     trek = db.relationship('Trek', back_populates='bookings')
 

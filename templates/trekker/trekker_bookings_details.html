@@ -16,7 +16,7 @@
         {{ macros.detail_item("Location", trek.location) }}
         {{ macros.detail_item("Start Date", trek.start_date.strftime("%d %b %Y")) }}
         {{ macros.detail_item("End Date", trek.end_date.strftime("%d %b %Y")) }}
-        {{ macros.detail_item("Additional Info", trek.additional_info) }}
+        
 
         <h5 class="my-3 text-decoration-underline"> Booking Info </h5>
         {{ macros.detail_item("Booking ID", booking.id) }}
@@ -25,7 +25,7 @@
         {{ macros.detail_item("Amount Paid", trek.amount) }}
         {{ macros.detail_item("Booking Status", booking.booking_status | title) }}
         {{ macros.detail_item("Payment Status", booking.payment_status | title) }}
-        {{ macros.detail_item("Additional Information", booking.additional_info) }}
+        
         <div class="mb-2">
             <strong> Action :</strong> 
             <span>
