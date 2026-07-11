@@ -22,9 +22,11 @@ def create_app():
 
     from application.controllers.auth import auth_bp
     from application.controllers.admin_bp import admin_bp
-    from application.controllers import admin, admin_treks
-    from application.controllers.staff import staff_bp
-    from application.controllers.trekker import trekker_bp
+    from application.controllers import admin, admin_treks, admin_staff, admin_trekker, admin_bookings
+    from application.controllers.staff_bp import staff_bp
+    from application.controllers import staff, staff_profile, staff_bookings
+    from application.controllers.trekker_bp import trekker_bp
+    from application.controllers import trekker, trekker_bookings, trekker_profile
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)

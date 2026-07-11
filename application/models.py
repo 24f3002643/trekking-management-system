@@ -45,8 +45,8 @@ class Booking(db.Model):
     trek_id = db.Column(db.Integer(), db.ForeignKey('trek.id'), nullable=False)
     booking_date = db.Column(db.DateTime(), nullable=False, default=db.func.now()) 
     #db.func.now() calls the database NOW() function to get the current timestamp.
-    booking_status = db.Column(db.Enum('initiated', 'pending', 'booked', 'cancelled', 'completed'), nullable=False, default='initiated')
-    payment_status = db.Column(db.Enum('pending', 'paid', 'refunded'), nullable=False, default='pending')
+    booking_status = db.Column(db.Enum('pending','booked', 'cancelled', 'completed'), nullable=False, default='booked')
+    payment_status = db.Column(db.Enum('paid', 'refunded'), nullable=False, default='paid')
     additional_info = db.Column(db.String(250))
     trekker = db.relationship('User', back_populates='bookings')
     trek = db.relationship('Trek', back_populates='bookings')

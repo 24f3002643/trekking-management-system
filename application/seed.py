@@ -6,13 +6,6 @@ Usage (in app.py, inside `with app.app_context():` block, after db.create_all())
     from application.seed import seed_dummy_data, assign_dummy_staff_to_treks
     seed_dummy_data()
     assign_dummy_staff_to_treks()
-
-Safe to run multiple times: it checks for existing dummy data (by email prefix)
-before inserting, so it won't create duplicates on repeated app restarts.
-
-Note: Trek.start_date / Trek.end_date are `date` objects (matching the
-models.py Date() column type). Booking.booking_date stays a full `datetime`,
-since a booking's exact timestamp is meaningful (ordering, audit trail).
 """
 
 import random
@@ -36,21 +29,39 @@ STAFF_NAMES = [
 ]
 
 TREK_NAMES = [
-    "Everest Base Camp", "Annapurna Circuit", "Valley of Flowers", "Hampta Pass",
-    "Kedarkantha Trek", "Roopkund Trek", "Chadar Trek", "Har Ki Dun",
-    "Triund Trek", "Kashmir Great Lakes", "Rupin Pass", "Goecha La",
-    "Sandakphu Trek", "Brahmatal Trek", "Pin Parvati Pass"
+    "Everest Base Camp",
+    "Annapurna Circuit",
+    "Valley of Flowers",
+    "Hampta Pass",
+    "Kedarkantha Trek",
+    "Roopkund Trek",
+    "Chadar Trek",
+    "Har Ki Dun",
+    "Triund Trek",
+    "Kashmir Great Lakes",
+    "Rupin Pass",
+    "Goecha La",
+    "Sandakphu Trek",
+    "Brahmatal Trek",
+    "Pin Parvati Pass"
 ]
 
 LOCATIONS = [
-    "Nepal", "Uttarakhand", "Himachal Pradesh", "Ladakh", "Sikkim",
-    "Kashmir", "Meghalaya", "Arunachal Pradesh"
+    "Nepal",
+    "Uttarakhand",
+    "Himachal Pradesh",
+    "Ladakh",
+    "Sikkim",
+    "Kashmir",
+    "Meghalaya",
+    "Arunachal Pradesh"
 ]
 
-DIFFICULTIES = ["easy", "moderate", "hard"]
-TREK_STATUSES = ["upcoming", "ongoing", "completed", "cancelled"]
-BOOKING_STATUSES = ["initiated", "pending", "booked", "cancelled", "completed"]
-PAYMENT_STATUSES = ["pending", "paid", "refunded"]
+DIFFICULTIES = [
+    "easy",
+    "moderate",
+    "hard"
+]
 
 DUMMY_EMAIL_PREFIX = "dummy_"
 DUMMY_PASSWORD = "password123"
@@ -62,42 +73,46 @@ def seed_dummy_data(
     num_treks=15,
     num_bookings=15,
 ):
-    """Creates dummy trekkers, staff, treks and bookings."""
 
-    existing = User.query.filter(User.email.like(f"{DUMMY_EMAIL_PREFIX}%")).first()
-    if existing is not None:
-        print("Dummy data already exists — skipping seed.")
+    existing = User.query.filter(
+        User.email.like(f"{DUMMY_EMAIL_PREFIX}%")
+    ).first()
+
+    if existing:
+        print("Dummy data already exists — skipping.")
         return
 
     password_hash = generate_password_hash(DUMMY_PASSWORD)
 
     # ---------------- Trekkers ----------------
+
     trekkers = []
 
     for i in range(1, num_trekkers + 1):
-        base_name = TREKKER_NAMES[(i - 1) % len(TREKKER_NAMES)]
 
         trekker = User(
-            name=f"{base_name} {i}",
+            name=f"{TREKKER_NAMES[(i-1)%len(TREKKER_NAMES)]} {i}",
             email=f"{DUMMY_EMAIL_PREFIX}trekker{i}@example.com",
             password_hash=password_hash,
             phone_number=f"90000{i:05d}",
             role="trekker",
             approval_status=None,
-            is_blacklisted=random.choice([False, False, False, True])
+            is_blacklisted=random.choice(
+                [False, False, False, True]
+            )
         )
 
         trekkers.append(trekker)
         db.session.add(trekker)
 
     # ---------------- Staff ----------------
+
     staff_members = []
 
     for i in range(1, num_staff + 1):
-        base_name = STAFF_NAMES[(i - 1) % len(STAFF_NAMES)]
 
         staff = User(
-            name=f"{base_name} {i}",
+            name=f"{STAFF_NAMES[(i-1)%len(STAFF_NAMES)]} {i}",
             email=f"{DUMMY_EMAIL_PREFIX}staff{i}@example.com",
             password_hash=password_hash,
             phone_number=f"91000{i:05d}",
@@ -105,7 +120,9 @@ def seed_dummy_data(
             approval_status=random.choice(
                 ["approved", "approved", "approved", "pending", "rejected"]
             ),
-            is_blacklisted=random.choice([False, False, False, True])
+            is_blacklisted=random.choice(
+                [False, False, False, True]
+            )
         )
 
         staff_members.append(staff)
@@ -114,30 +131,43 @@ def seed_dummy_data(
     db.session.commit()
 
     # ---------------- Treks ----------------
+
     treks = []
 
+    today = date.today()
+
     for i in range(1, num_treks + 1):
-        base_name = TREK_NAMES[(i - 1) % len(TREK_NAMES)]
+
+        start = today + timedelta(
+            days=random.randint(-30, 60)
+        )
+
+        end = start + timedelta(
+            days=random.randint(3, 12)
+        )
+
+        if end < today:
+            trek_status = "completed"
+
+        elif start <= today <= end:
+            trek_status = "ongoing"
+
+        else:
+            trek_status = "upcoming"
 
         total_slots = random.randint(10, 50)
-        booked_slots = random.randint(0, total_slots)
-
-        # Trek.start_date / end_date are `date` columns -> use date.today(),
-        # not datetime.now(), to match the column type exactly.
-        start = date.today() + timedelta(days=random.randint(-30, 60))
-        end = start + timedelta(days=random.randint(3, 12))
 
         trek = Trek(
-            trekname=f"{base_name} {i}",
+            trekname=f"{TREK_NAMES[(i-1)%len(TREK_NAMES)]} {i}",
             location=random.choice(LOCATIONS),
             difficulty=random.choice(DIFFICULTIES),
             total_slots=total_slots,
-            available_slots=total_slots - booked_slots,
-            status=random.choice(TREK_STATUSES),
+            available_slots=total_slots,
+            status=trek_status,
             start_date=start,
             end_date=end,
             amount=round(random.uniform(5000, 25000), 2),
-            additional_info=f"A wonderful trekking experience through {base_name}."
+            additional_info=f"A wonderful trekking experience through {TREK_NAMES[(i-1)%len(TREK_NAMES)]}."
         )
 
         treks.append(trek)
@@ -146,6 +176,7 @@ def seed_dummy_data(
     db.session.commit()
 
     # ---------------- Bookings ----------------
+
     created = set()
 
     while len(created) < num_bookings:
@@ -153,24 +184,61 @@ def seed_dummy_data(
         trekker = random.choice(trekkers)
         trek = random.choice(treks)
 
-        # one booking per trek per trekker
+        # One booking per trek per trekker
         if (trekker.id, trek.id) in created:
             continue
 
         created.add((trekker.id, trek.id))
 
+        # Booking status depends on trek status
+        if trek.status == "completed":
+            booking_status = random.choice(
+                ["completed", "cancelled"]
+            )
+
+        elif trek.status in ["upcoming", "ongoing"]:
+            booking_status = random.choice(
+                ["pending", "booked", "cancelled"]
+            )
+
+        else:
+            booking_status = "cancelled"
+
+        if booking_status == "cancelled":
+            payment_status = "refunded"
+        else:
+            payment_status = "paid"
+
         booking = Booking(
             user_id=trekker.id,
             trek_id=trek.id,
-            # Booking.booking_date stays a full datetime (exact timestamp matters
-            # for ordering/audit), unlike Trek's plain date columns.
-            booking_date=datetime.now() - timedelta(days=random.randint(0, 45)),
-            booking_status=random.choice(BOOKING_STATUSES),
-            payment_status=random.choice(PAYMENT_STATUSES),
+            booking_date=datetime.now() - timedelta(
+                days=random.randint(0, 45)
+            ),
+            booking_status=booking_status,
+            payment_status=payment_status,
             additional_info=None
         )
 
         db.session.add(booking)
+
+    db.session.commit()
+
+    # ---------------- Update Available Slots ----------------
+
+    for trek in treks:
+
+        active_bookings = Booking.query.filter(
+            Booking.trek_id == trek.id,
+            Booking.booking_status.in_(
+                ["pending", "booked"]
+            )
+        ).count()
+
+        trek.available_slots = max(
+            0,
+            trek.total_slots - active_bookings
+        )
 
     db.session.commit()
 
@@ -181,15 +249,14 @@ def seed_dummy_data(
         f"{num_bookings} bookings."
     )
 
-
 def assign_dummy_staff_to_treks(
     min_staff_per_trek=5,
     max_staff_per_trek=8,
 ):
     """
     Assign approved staff to treks.
-    Respects the invariant that a staff member cannot be assigned
-    to overlapping treks.
+
+    A staff member cannot be assigned to overlapping treks.
     """
 
     if StaffTrekAssignment.query.first():
@@ -202,46 +269,70 @@ def assign_dummy_staff_to_treks(
         is_blacklisted=False,
     ).all()
 
-    treks = Trek.query.order_by(Trek.start_date).all()
+    treks = Trek.query.order_by(
+        Trek.start_date.asc()
+    ).all()
 
-    # staff_id -> list[(start,end)]
-    schedule = {staff.id: [] for staff in approved_staff}
+    # staff_id -> list of (start_date, end_date)
+    schedule = {
+        staff.id: []
+        for staff in approved_staff
+    }
 
     for trek in treks:
 
-        available = []
+        available_staff = []
 
         for staff in approved_staff:
 
-            conflict = False
+            overlap = False
 
             for start, end in schedule[staff.id]:
+
                 if trek.start_date <= end and trek.end_date >= start:
-                    conflict = True
+                    overlap = True
                     break
 
-            if not conflict:
-                available.append(staff)
+            if not overlap:
+                available_staff.append(staff)
 
-        if not available:
+        if not available_staff:
             continue
 
-        upper = min(max_staff_per_trek, len(available))
-        lower = min(min_staff_per_trek, upper)
+        upper = min(
+            max_staff_per_trek,
+            len(available_staff)
+        )
 
-        count = random.randint(lower, upper)
+        lower = min(
+            min_staff_per_trek,
+            upper
+        )
 
-        for staff in random.sample(available, count):
+        count = random.randint(
+            lower,
+            upper
+        )
 
-            db.session.add(
-                StaffTrekAssignment(
-                    user_id=staff.id,
-                    trek_id=trek.id,
-                )
+        selected_staff = random.sample(
+            available_staff,
+            count
+        )
+
+        for staff in selected_staff:
+
+            assignment = StaffTrekAssignment(
+                user_id=staff.id,
+                trek_id=trek.id,
             )
 
+            db.session.add(assignment)
+
             schedule[staff.id].append(
-                (trek.start_date, trek.end_date)
+                (
+                    trek.start_date,
+                    trek.end_date
+                )
             )
 
     db.session.commit()
