@@ -1,7 +1,7 @@
 {% extends "admin/base_admin.html" %}
 {% import "_macros.html" as macros %}
 
-{% block page_title %} Trekker Detail Page{% endblock %}
+{% block page_title %} Admin Trekker Details Page{% endblock %}
 
 {% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
 
@@ -15,7 +15,7 @@
         {{ macros.detail_item("Trekker Name", trekker.name) }}
         {{ macros.detail_item("Email", trekker.email) }}
         {{ macros.detail_item("Phone Number", trekker.phone_number) }}
-        {{ macros.detail_item("Is Blacklist", trekker.is_blacklisted) }}
+        {{ macros.detail_item("Is Blacklist", trekker.is_blacklisted | title ) }}
         <div class="mb-2">
             <strong>Blacklisting Action :</strong> 
             <span>
@@ -52,8 +52,8 @@
                         <td><a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
                         <td><a href="{{ url_for('admin.admin_treks_view', trek_id=booking.trek_id) }}">#{{ booking.trek.id}}</a> {{ booking.trek.trekname }}</td>
                         <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
-                        <td>{{ booking.booking_status }}</td>
-                        <td>{{ booking.payment_status }}</td>
+                        <td>{{ booking.booking_status | title }}</td>
+                        <td>{{ booking.payment_status | title }}</td>
                     </tr>
                     {% endfor %}
                 {% else %}

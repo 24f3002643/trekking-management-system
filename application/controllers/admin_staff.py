@@ -13,13 +13,29 @@ from application.controllers.admin_bp import admin_bp
 def admin_staff_page():
     id = session.get('user_id')
     this_user = User.query.filter_by(id=id).first()
+    staff_id = request.args.get("id", type=int)
+    name = request.args.get("name", "").strip()
+    approval_status = request.args.get("approval_status")
+    is_blacklisted = request.args.get("is_blacklisted")
+    query = User.query.filter_by(role="staff")
+
+    if staff_id:
+        query = query.filter(User.id == staff_id)
+    if name:
+        query = query.filter(User.name.ilike(f"%{name}%"))
+    if approval_status:
+        query = query.filter(User.approval_status == approval_status)
+    if is_blacklisted == "true":
+        query = query.filter(User.is_blacklisted.is_(True))
+    elif is_blacklisted == "false":
+        query = query.filter(User.is_blacklisted.is_(False))
     status_order = db.case(
         (User.approval_status == "pending", 1),
         (User.approval_status == "approved", 2),
         (User.approval_status == "rejected", 3),
         else_=4
     )
-    all_staff = User.query.filter_by(role="staff").order_by(status_order, User.name.asc()).all()
+    all_staff = query.order_by(status_order, User.name.asc()).all()
     return render_template("admin/admin_staff.html", this_user=this_user, all_staff=all_staff)
     
 
@@ -55,8 +71,17 @@ def admin_staff_view(staff_id):
 def admin_staff_pending():
     id = session.get('user_id')
     this_user = User.query.get(id)
-
-    all_pending_staff = User.query.filter_by(role="staff", approval_status="pending").all()
+    staff_id = request.args.get("id", type=int)
+    name = request.args.get("name", "").strip()
+    email = request.args.get("email", "").strip()
+    query = User.query.filter_by(role="staff", approval_status="pending")
+    if staff_id:
+        query = query.filter(User.id == staff_id)
+    if name:
+        query = query.filter(User.name.ilike(f"%{name}%"))
+    if email:
+        query = query.filter(User.email.ilike(f"%{email}%"))
+    all_pending_staff = query.order_by(User.name.asc()).all()
     return render_template("admin/admin_staff_pending.html", this_user=this_user, all_pending_staff=all_pending_staff)
 
 
@@ -95,6 +120,8 @@ def admin_staff_blacklist(staff_id):
     staff = User.query.get(staff_id)
     if staff is None or staff.role != "staff":
         return render_template("message.html", title="No Staff Found", message="No staff with the given id exists.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
+    if staff.approval_status != "approved":
+        return render_template("message.html", title="Not Allowed", message="Unapproved staff cannot be marked as blacklisted.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
     staff.is_blacklisted = True
     db.session.commit()
     return render_template("message.html", title="Blacklisted", message="The staff has been blacklisted successfully.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
@@ -107,6 +134,8 @@ def admin_staff_unblacklist(staff_id):
     staff = User.query.get(staff_id)
     if staff is None or staff.role != "staff":
         return render_template("message.html", title="No Staff Found", message="No staff with the given id exists.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
+    if staff.approval_status != "approved":
+        return render_template("message.html", title="Not Allowed", message="Unapproved staff cannot be marked as un-blacklisted.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')
     staff.is_blacklisted = False
     db.session.commit()
     return render_template("message.html", title="Un-blacklisted", message="The staff has been un-blacklisted successfully.", href=url_for('admin.admin_staff_page'), a_text='Back to Admin Staff Page')

@@ -1,0 +1,73 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+
+{% block page_title %} Admin Booking Details Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <h5 class="mb-3 text-center"> #{{booking.id }} Booking</h5>
+    <div id="details">
+        {{ macros.detail_item("Booking ID", booking.id) }}
+        {{ macros.detail_item("Trek Name", "#" ~ trek.id ~ " " ~ trek.trekname ) }}
+        {{ macros.detail_item("Trekker Name", "#" ~ trekker.id ~ " " ~ trekker.name) }}
+        {{ macros.detail_item("Booking Date", booking.booking_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("Booking Time", booking.booking_date.strftime("%H:%M:%S")) }}
+        {{ macros.detail_item("Booking Status", booking.booking_status | title ) }}
+        {{ macros.detail_item("Payment Status", booking.payment_status | title ) }}
+        {{ macros.detail_item("Additional Information", booking.additional_info) }}
+        <div class="mb-2">
+            <strong> Action :</strong> 
+            <span>
+                {% if booking.booking_status == "pending" %}
+                    <form action="{{ url_for('admin.admin_bookings_approve', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                    </form>
+                    <form action="{{ url_for('admin.admin_bookings_reject', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                {% elif booking.booking_status == "booked" %}
+                    <form action="{{ url_for('admin.admin_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                    </form>
+                {% elif booking.booking_status in ["completed", "cancelled", "initiated"] %}
+                    No Action Required
+                {% endif %}   
+            </span>
+        </div>
+        
+    </div>
+    
+    <h5 class="mt-3">Trek Details in this booking</h5>
+    <div id="details">
+        <div class="mb-2">
+            <strong>Trek ID : </strong> <a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}"> #{{ trek.id }}</a> 
+        </div>
+        {{ macros.detail_item("Trek Name", trek.trekname) }}
+        {{ macros.detail_item("Location", trek.location) }}
+        {{ macros.detail_item("Start Date", trek.start_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("End Date", trek.end_date.strftime("%d %b %Y")) }}
+        {{ macros.detail_item("Total Slots", trek.total_slots) }}
+        {{ macros.detail_item("Available Slots", trek.available_slots) }}
+        {{ macros.detail_item("Amount", trek.amount) }}
+        {{ macros.detail_item("Additional Info", trek.additional_info) }}
+    </div>
+
+     <h5 class="mt-3">Trekker Details in this booking</h5>
+    <div id="details">
+        <div class="mb-2">
+            <strong>Trek ID : </strong> <a href="{{ url_for('admin.admin_trekkers_view', trekker_id=trekker.id) }}"> #{{ trekker.id }}</a> 
+        </div>
+        {{ macros.detail_item("Trekker Name", trekker.name) }}
+        {{ macros.detail_item("Email", trekker.email) }}
+        {{ macros.detail_item("Phone Number", trekker.phone_number) }}
+        {{ macros.detail_item("Is Blacklist", trekker.is_blacklisted | title ) }}
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_bookings_page') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

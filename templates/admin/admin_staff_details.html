@@ -1,7 +1,7 @@
 {% extends "admin/base_admin.html" %}
 {% import "_macros.html" as macros %}
 
-{% block page_title %} Staff Detail Page{% endblock %}
+{% block page_title %} Admin Staff Details Page{% endblock %}
 
 {% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
 
@@ -15,8 +15,8 @@
         {{ macros.detail_item("Staff Name", staff.name) }}
         {{ macros.detail_item("Email", staff.email) }}
         {{ macros.detail_item("Phone Number", staff.phone_number) }}
-        {{ macros.detail_item("Approval Status", staff.approval_status) }}
-        {{ macros.detail_item("Is Blacklist", staff.is_blacklisted) }}
+        {{ macros.detail_item("Approval Status", staff.approval_status | title ) }}
+        {{ macros.detail_item("Is Blacklist", staff.is_blacklisted | title ) }}
         <div class="mb-2">
             <strong>Approval Action :</strong> 
             <span>
@@ -35,14 +35,18 @@
         <div class="mb-2">
             <strong>Blacklisting Action :</strong> 
             <span>
-                {% if staff.is_blacklisted %}
-                    <form action="{{ url_for('admin.admin_staff_unblacklist', staff_id=staff.id) }}" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-sm btn-danger">Un-blacklist</button>
-                    </form>
+                {% if staff.approval_status == "approved" %}
+                    {% if staff.is_blacklisted %}
+                        <form action="{{ url_for('admin.admin_staff_unblacklist', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-danger">Un-blacklist</button>
+                        </form>
+                    {% else %}
+                        <form action="{{ url_for('admin.admin_staff_blacklist', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-dark">Blacklist</button>
+                        </form>
+                    {% endif %}
                 {% else %}
-                    <form action="{{ url_for('admin.admin_staff_blacklist', staff_id=staff.id) }}" method="POST" style="display: inline;">
-                        <button type="submit" class="btn btn-sm btn-dark">Blacklist</button>
-                    </form>
+                    No Action Required
                 {% endif %}
     </span>
         </div>

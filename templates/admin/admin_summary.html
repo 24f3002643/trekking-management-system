@@ -1,0 +1,85 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'summary_page' %}
+
+{% block page_title %}Admin Summary Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div id="dashboard-top-content" >
+    <h5 class="mb-3">Quick Overview</h5>
+    <div class="row g-3">
+        {{ macros.stat_card('Total Treks', total_treks, 'signpost-2') }}
+        {{ macros.stat_card('Total Staff', total_staff, 'person-badge') }}
+        {{ macros.stat_card('Total Trekkers', total_trekkers, 'people') }}
+        {{ macros.stat_card('Total Bookings', total_bookings, 'journal-check') }}
+    </div>
+</div>
+
+<div id="summary-section" class="mt-4">
+    <h5 class="mb-3">Top 10 Popular Treks</h5>
+    <div class="mb-4 text-center">
+        {% if top_treks_chart %}
+            <img src="{{ url_for('static', filename=top_treks_chart) }}" alt="Top 10 Popular Treks chart" class="img-fluid">
+        {% else %}
+            <p class="text-muted">No bookings yet.</p>
+        {% endif %}
+    </div>
+
+    <h5 class="mb-3">Bookings in the Past 7 Days</h5>
+    <div class="mb-4 text-center">
+        {% if last_7_days_chart %}
+            <img src="{{ url_for('static', filename=last_7_days_chart) }}" alt="Bookings in the past 7 days chart" class="img-fluid">
+        {% else %}
+            <p class="text-muted">No bookings in the past 7 days.</p>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4 text-center">
+            <h5 class="mb-3">Bookings: Pending vs Booked</h5>
+            {% if pending_booked_chart %}
+                <img src="{{ url_for('static', filename=pending_booked_chart) }}" alt="Pending vs Booked bookings chart" class="img-fluid">
+            {% else %}
+                <p class="text-muted">No pending or booked bookings yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-4 text-center">
+            <h5 class="mb-3">Staff Approval Status</h5>
+            {% if staff_approval_chart %}
+                <img src="{{ url_for('static', filename=staff_approval_chart) }}" alt="Staff approval status chart" class="img-fluid">
+            {% else %}
+                <p class="text-muted">No staff registrations yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4 text-center">
+            <h5 class="mb-3">Trekkers: Active vs Blacklisted</h5>
+            {% if trekker_blacklist_chart %}
+                <img src="{{ url_for('static', filename=trekker_blacklist_chart) }}" alt="Trekker blacklist status chart" class="img-fluid">
+            {% else %}
+                <p class="text-muted">No trekkers registered yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="col-md-6 mb-4 text-center">
+            <h5 class="mb-3">Staff: Active vs Blacklisted</h5>
+            {% if staff_blacklist_chart %}
+                <img src="{{ url_for('static', filename=staff_blacklist_chart) }}" alt="Staff blacklist status chart" class="img-fluid">
+            {% else %}
+                <p class="text-muted">No staff registered yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

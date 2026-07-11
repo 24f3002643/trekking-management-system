@@ -13,7 +13,22 @@ from application.controllers.admin_bp import admin_bp
 def admin_trekkers_page():
     id = session.get('user_id')
     this_user = User.query.filter_by(id=id).first()
-    all_trekkers = User.query.filter_by(role="trekker").order_by(User.name.asc()).all()
+    trekker_id = request.args.get("id", type=int)
+    name = request.args.get("name", "").strip()
+    email = request.args.get("email", "").strip()
+    is_blacklisted = request.args.get("is_blacklisted")
+    query = User.query.filter_by(role="trekker")
+    if trekker_id:
+        query = query.filter(User.id == trekker_id)
+    if name:
+        query = query.filter(User.name.ilike(f"%{name}%"))
+    if email:
+        query = query.filter(User.email.ilike(f"%{email}%"))
+    if is_blacklisted == "true":
+        query = query.filter(User.is_blacklisted.is_(True))
+    elif is_blacklisted == "false":
+        query = query.filter(User.is_blacklisted.is_(False))
+    all_trekkers = query.order_by(User.name.asc()).all()
     return render_template("admin/admin_trekkers.html", this_user=this_user, all_trekkers=all_trekkers)
 
 # To view the details of a particular trekker
@@ -31,14 +46,13 @@ def admin_trekkers_view(trekker_id):
         (Booking.booking_status == 'pending', 1),
         (Booking.booking_status == 'booked', 2),
         (Booking.booking_status == 'completed', 3),
-        (Booking.booking_status == 'initiated', 4),
-        (Booking.booking_status == 'cancelled', 5),
-        else_=6
+        (Booking.booking_status == 'cancelled', 4),
+        else_=5
     )
     bookings = Booking.query.filter_by(user_id=trekker.id).order_by(status_order, Booking.booking_date.desc()).all()
     return render_template("admin/admin_trekkers_details.html", this_user=this_user, trekker=trekker, bookings=bookings)
 
-# To submit the request tp blacklist the trekker
+# To submit the request to blacklist the trekker
 @admin_bp.route('/admin/trekkers/<trekker_id>/blacklist', methods=["POST"])
 @role_required('admin')
 def admin_trekkers_blacklist(trekker_id):
@@ -50,7 +64,7 @@ def admin_trekkers_blacklist(trekker_id):
     return render_template("message.html", title="Blacklisted", message="The trekker has been blacklisted successfully.", href=url_for('admin.admin_trekkers_page'), a_text='Back to Admin Trekker Page')
 
 
-# To submit the request tp unblacklist the trekker
+# To submit the request tp un-blacklist the trekker
 @admin_bp.route('/admin/trekkers/<trekker_id>/unblacklist', methods=["POST"])
 @role_required('admin')
 def admin_trekkers_unblacklist(trekker_id):

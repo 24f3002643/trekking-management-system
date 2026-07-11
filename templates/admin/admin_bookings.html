@@ -1,0 +1,90 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'bookings_page' %}
+
+{% block page_title %}Admin Bookings Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-start">
+        <h5 class="mb-0" >All Bookings</h5>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <form class="d-flex  gap-2" method="GET" action="{{ url_for('admin.admin_bookings_page') }}">
+
+            <input type="number" class="form-control form-control-sm" name="trek_id" placeholder="Trek ID" value="{{ request.args.get('trek_id', '') }}">
+
+            <input type="number" class="form-control form-control-sm" name="trekker_id" placeholder="Trekker ID" value="{{ request.args.get('trekker_id', '') }}">
+
+            <input type="date" class="form-control form-control-sm" name="booking_date" value="{{ request.args.get('booking_date', '') }}">
+
+            <select name="booking_status" class="form-select form-select-sm">
+                <option value="">Booking Status</option>
+                <option value="pending" {% if request.args.get('booking_status') == 'pending' %}selected{% endif %}>Pending</option>
+                <option value="booked" {% if request.args.get('booking_status') == 'booked' %}selected{% endif %}>Booked</option>
+                <option value="cancelled" {% if request.args.get('booking_status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                <option value="completed" {% if request.args.get('booking_status') == 'completed' %}selected{% endif %}>Completed</option>
+            </select>
+
+            <select name="payment_status" class="form-select form-select-sm">
+                <option value="">Payment Status</option>
+                <option value="paid" {% if request.args.get('payment_status') == 'paid' %}selected{% endif %}>Paid</option>
+                <option value="refunded" {% if request.args.get('payment_status') == 'refunded' %}selected{% endif %}>Refunded</option>
+            </select>
+
+            <button class="btn btn-sm btn-primary" type="submit">Search</button>
+            <a href="{{ url_for('admin.admin_bookings_page') }}" class="btn btn-sm btn-secondary">Clear</a>
+
+        </form>
+            <a href="{{ url_for('admin.admin_bookings_pending') }}" class="btn btn-primary"><i class="bi bi-person-fill-exclamation"></i>  Bookings with Pending Approval</a>
+        </div>
+    </div>
+    <div class="table-responsive list-table-wrapper">
+        <table class="table table-hover align-middle text-center">
+            <thead>
+                <tr>
+                    <th>Booking ID</th>
+                    <th>Trek Name</th>
+                    <th>Trekker Name</th>
+                    <th>Booking Date</th>
+                    <th>Booking Status</th>
+                    <th>Payment Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in all_bookings %}
+                <tr>
+                    <td><a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
+                    <td><a href="{{ url_for('admin.admin_trekkers_view', trekker_id=booking.trekker.id) }}">#{{ booking.trekker.id }}</a>  {{ booking.trekker.name }}</td>
+                    <td><a href="{{ url_for('admin.admin_treks_view', trek_id=booking.trek.id) }}">#{{ booking.trek.id }}</a> {{ booking.trek.trekname }}</td>
+                    <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
+                    <td>{{ booking.booking_status | title }}</td>
+                    <td>{{ booking.payment_status | title }}</td>
+                    <td>
+                        {% if booking.booking_status == "pending" %}
+                            <form action="{{ url_for('admin.admin_bookings_approve', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                            <form action="{{ url_for('admin.admin_bookings_reject', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                            </form>
+                        {% elif booking.booking_status == "booked" %}
+                            <form action="{{ url_for('admin.admin_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                            </form>
+                        {% endif %}
+                            <a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}" class="btn btn-sm btn-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

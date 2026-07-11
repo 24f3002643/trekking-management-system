@@ -1,0 +1,186 @@
+{% extends "admin/base_admin.html" %}
+{% import "_macros.html" as macros %}
+{% set active_page = 'search_page' %}
+
+{% block page_title %}Admin Search Page{% endblock %}
+
+{% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
+
+
+
+{% block main_section %}
+<div class="list-page-wrapper">
+    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0" >Search Result</h5>
+        <form class="d-flex  gap-2" method="GET" action="{{ url_for('admin.admin_search') }}">
+
+                <select name="entity" class="form-select form-select-sm">
+                    <option value="">Search For</option>
+                    <option value="trekker" {% if request.args.get('entity') == 'trekker' %}selected{% endif %}>Trekker</option>
+                    <option value="staff" {% if request.args.get('entity') == 'staff' %}selected{% endif %}>Staff</option>
+                    <option value="trek" {% if request.args.get('entity') == 'trek' %}selected{% endif %}>Trek</option>
+                </select>
+
+                <input type="number" class="form-control form-control-sm" name="id" placeholder="ID" value="{{ request.args.get('id', '') }}">
+
+                <input type="text" class="form-control form-control-sm" name="name" placeholder="Name" value="{{ request.args.get('name', '') }}">
+
+                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                <a href="{{ url_for('admin.admin_search') }}" class="btn btn-sm btn-secondary">Clear</a>
+            </form>
+    </div>
+    {% if entity == "trekker" %}
+        <div class="table-responsive list-table-wrapper">
+            <table class="table table-hover align-middle text-center">
+                <thead>
+                    <tr>
+                        <th>Trekker ID</th>
+                        <th>Trekker Name</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Is Blacklisted</th>
+                        <th>Blacklist Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if all_entities %}
+                    {% for trekker in all_entities %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.admin_trekkers_view', trekker_id=trekker.id) }}">#{{ trekker.id }}</a></td>
+                        <td>{{ trekker.name }}</td>
+                        <td>{{ trekker.email }}</td>
+                        <td>{{ trekker.phone_number }}</td>
+                        <td>{{ trekker.is_blacklisted | title }}</td>
+                        <td>
+                            {% if trekker.is_blacklisted %}
+                                <form action="{{ url_for('admin.admin_trekkers_unblacklist', trekker_id=trekker.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Un-blacklist</button>
+                                </form>
+                            {% else %}
+                                <form action="{{ url_for('admin.admin_trekkers_blacklist', trekker_id=trekker.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-dark">Blacklist</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-muted">Not trekkers found.</td>
+                    </tr>    
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+    
+    {% if entity == "staff" %}
+        <div class="table-responsive list-table-wrapper">
+            <table class="table table-hover align-middle text-center">
+                <thead>
+                    <tr>
+                        <th>Staff ID</th>
+                        <th>Staff Name</th>
+                        <th>Email</th>
+                        <th>Phone Number</th>
+                        <th>Approval Status</th>
+                        <th>Is Blacklisted</th>
+                        <th>Approval Action</th>
+                        <th>Blacklist Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if all_entities %}
+                        {% for staff in all_entities %}
+                        <tr>
+                            <td><a href="{{ url_for('admin.admin_staff_view', staff_id=staff.id) }}">#{{ staff.id }}</a></td>
+                            <td>{{ staff.name }}</td>
+                            <td>{{ staff.email }}</td>
+                            <td>{{ staff.phone_number }}</td>
+                            <td>{{ staff.approval_status | title }}</td>
+                            <td>{{ staff.is_blacklisted | title }}</td>
+                            <td>
+                                {% if staff.approval_status == "pending" %}
+                                    <form action="{{ url_for('admin.admin_staff_approve', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                    </form>
+                                    <form action="{{ url_for('admin.admin_staff_reject', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                    </form>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if staff.is_blacklisted %}
+                                    <form action="{{ url_for('admin.admin_staff_unblacklist', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-danger">Un-blacklist</button>
+                                    </form>
+                                {% else %}
+                                    <form action="{{ url_for('admin.admin_staff_blacklist', staff_id=staff.id) }}" method="POST" style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-dark">Blacklist</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-muted">Not staff found.</td>
+                        </tr>    
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    {% if entity == "trek" %}
+        <div class="table-responsive list-table-wrapper">
+            <table class="table table-hover align-middle text-center">
+                <thead>
+                    <tr>
+                        <th>Trek ID</th>
+                        <th>Trek Name</th>
+                        <th>Location</th>
+                        <th>Duration</th>
+                        <th>Slots (Available/Total)</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if all_entities %}
+                        {% for trek in all_entities %}
+                        <tr>
+                            <td><a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}">#{{ trek.id }}</a></td>
+                            <td>{{ trek.trekname }}</td>
+                            <td>{{ trek.location }}</td>
+                            <td>{{ trek.start_date.strftime('%d %b %Y') }} - {{ trek.end_date.strftime('%d %b %Y') }}</td>
+                            <td>{{ trek.available_slots}} / {{ trek.total_slots }}</td>
+                            <td>{{ trek.amount }}</td>
+                            <td>{{ trek.status | title }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}" class="btn btn-sm btn-primary">View</a>
+                                <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-muted">
+                                No treks exists.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %} 
+    
+</div>
+{% endblock %}
+
+{% block return_link %}<a href="{{ url_for( 'admin.admin_dashboard') }}"><i class="bi bi-arrow-left"></i>  Return Back</a>{% endblock %}

@@ -1,7 +1,7 @@
 {% extends "admin/base_admin.html" %}
 {% import "_macros.html" as macros %}
 
-{% block page_title %} Trek Detail Page{% endblock %}
+{% block page_title %} Admin Trek Detail Page{% endblock %}
 
 {% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
 
@@ -9,7 +9,7 @@
 
 {% block main_section %}
 <div class="list-page-wrapper">
-    <h5 class="mb-3 text-center"> {{ trek.trekname }}</h5>
+    <h5 class="mb-3 text-center">#{{ trek.id }} {{ trek.trekname }}</h5>
     <div id="details">
         {{ macros.detail_item("Trek ID", trek.id) }}
         {{ macros.detail_item("Trek Name", trek.trekname) }}
@@ -19,15 +19,41 @@
         {{ macros.detail_item("Total Slots", trek.total_slots) }}
         {{ macros.detail_item("Available Slots", trek.available_slots) }}
         {{ macros.detail_item("Amount", trek.amount) }}
+        {{ macros.detail_item("Status", trek.status | title) }}
         {{ macros.detail_item("Additional Info", trek.additional_info) }}
         <div class="mb-2">
-            <strong>Action :</strong> 
+            <strong>Status Action :</strong> 
             <span>
-                <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                <a href="{{ url_for('admin.admin_treks_assign_staff', trek_id=trek.id) }}" class="btn btn-sm btn-info">Assign Staff</a>
-                <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">
-                    <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                </form>
+                {% if trek.status == "upcoming" %}
+                    <form action="{{ url_for('admin.admin_treks_ongoing', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-info">Start</button>
+                    </form>
+                    <form action="{{ url_for('admin.admin_treks_cancelled', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-warning">Cancel</button>
+                    </form>
+                {% endif %}
+
+                {% if trek.status == "ongoing" %}
+                    <form action="{{ url_for('admin.admin_treks_completed', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn btn-sm btn-success">Close</button>
+                    </form>
+                    {% if today <= trek.end_date %}
+                        <form action="{{ url_for('admin.admin_treks_cancelled', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-warning">Cancel</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </span>
+        </div>
+        <div class="mb-2">
+            <strong>Trek Action :</strong> 
+            <span>
+                {% if trek.status == "upcoming" %}
+                    <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                    <a href="{{ url_for('admin.admin_treks_manage_staff', trek_id=trek.id) }}" class="btn btn-sm btn-secondary">Manage Staff</a>
+                {% else %}
+                    No Action Required
+                {% endif %}
             </span>
         </div>
         
@@ -37,9 +63,9 @@
     <div id="details-list">
         {% if staff_assigned %}
             <ol>
-                {% for assignment in staff_assigned %}
+                {% for staff in staff_assigned %}
                 <li>
-                    <a href="{{ url_for('admin.admin_staff_view', staff_id=assignment.staff.id) }}">#{{ assignment.staff.id }}</a> {{ assignment.staff.name }}
+                    <a href="{{ url_for('admin.admin_staff_view', staff_id=staff.id) }}">#{{ staff.id }}</a> {{ staff.name }}
                 </li>
                 {% endfor %}
             </ol>

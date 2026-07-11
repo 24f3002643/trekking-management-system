@@ -2,7 +2,7 @@
 {% import "_macros.html" as macros %}
 {% set active_page = 'treks_page' %}
 
-{% block page_title %}Admin Trek Management Page{% endblock %}
+{% block page_title %}Admin Trek Page{% endblock %}
 
 {% block user_name %} Welcome {{ this_user.name }}!{% endblock %}
 
@@ -10,10 +10,42 @@
 
 {% block main_section %}
 <div class="list-page-wrapper">
-    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0" >All Treks</h5>
-        <a href="{{ url_for('admin.admin_treks_create') }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i>  Create Trek</a>
+    <div id="main-section-heading" class="mb-3 d-flex justify-content-between align-items-start">
+        <h5 class="mb-0">All Treks</h5>
+        <div class="d-flex flex-column align-items-end gap-2">
+            <form class="d-flex gap-2" method="GET" action="{{ url_for('admin.admin_treks_page') }}">
+                <input type="text" class="form-control form-control-sm" name="trekname"
+                    placeholder="Trek Name"
+                    value="{{ request.args.get('trekname', '') }}">
+
+                <input type="text" class="form-control form-control-sm" name="location"
+                    placeholder="Location"
+                    value="{{ request.args.get('location', '') }}">
+
+                <select name="difficulty" class="form-select form-select-sm">
+                    <option value="">Difficulty</option>
+                    <option value="easy" {% if request.args.get('difficulty') == 'easy' %}selected{% endif %}>Easy</option>
+                    <option value="moderate" {% if request.args.get('difficulty') == 'moderate' %}selected{% endif %}>Moderate</option>
+                    <option value="hard" {% if request.args.get('difficulty') == 'hard' %}selected{% endif %}>Hard</option>
+                </select>
+
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Status</option>
+                    <option value="upcoming" {% if request.args.get('status') == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="ongoing" {% if request.args.get('status') == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                    <option value="completed" {% if request.args.get('status') == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="cancelled" {% if request.args.get('status') == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                </select>
+
+                <button class="btn btn-sm btn-primary" type="submit">Search</button>
+                <a href="{{ url_for('admin.admin_treks_page') }}" class="btn btn-sm btn-secondary">Clear</a>
+            </form>
+            
+            <a href="{{ url_for('admin.admin_treks_create') }}" class="btn btn-success"><i class="bi bi-plus-lg"></i> Create Trek</a>
+
     </div>
+
+</div>
     <div class="table-responsive list-table-wrapper">
         <table class="table table-hover align-middle text-center">
             <thead>
@@ -29,26 +61,31 @@
                 </tr>
             </thead>
             <tbody>
-                {% for trek in all_treks %}
-                <tr>
-                    <td><a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}">#{{ trek.id }}</a></td>
-                    <td>{{ trek.trekname }}</td>
-                    <td>{{ trek.location }}</td>
-                    <td>{{ trek.start_date.strftime('%d %b %Y') }} - {{ trek.end_date.strftime('%d %b %Y') }}</td>
-                    <td>{{ trek.available_slots}} / {{ trek.total_slots }}</td>
-                    <td>{{ trek.amount }}</td>
-                    <td>{{ trek.status }}</td>
-                    <td>
-                        <a href="{{ url_for('admin.admin_treks_edit', trek_id=trek.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                        <a href="{{ url_for('admin.admin_treks_assign_staff', trek_id=trek.id) }}" class="btn btn-sm btn-info">Assign Staff</a>
-                        <a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}" class="btn btn-sm btn-primary">View</a>
-                        <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
-                        
-                    </td>
-                </tr>
-                {% endfor %}
+                {% if all_treks %}
+                    {% for trek in all_treks %}
+                    <tr>
+                        <td><a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}">#{{ trek.id }}</a></td>
+                        <td>{{ trek.trekname }}</td>
+                        <td>{{ trek.location }}</td>
+                        <td>{{ trek.start_date.strftime('%d %b %Y') }} - {{ trek.end_date.strftime('%d %b %Y') }}</td>
+                        <td>{{ trek.available_slots}} / {{ trek.total_slots }}</td>
+                        <td>{{ trek.amount }}</td>
+                        <td>{{ trek.status | title }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.admin_treks_view', trek_id=trek.id) }}" class="btn btn-sm btn-primary">View</a>
+                            <form action="{{ url_for('admin.admin_treks_delete', trek_id=trek.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" class="text-muted">
+                            No treks exists.
+                        </td>
+                    </tr>
+                {% endif %}
             </tbody>
         </table>
     </div>

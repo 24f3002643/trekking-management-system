@@ -37,19 +37,25 @@
                 {% for booking in recent_bookings %}
                 <tr>
                     <td><a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
-                    <td>{{ booking.trekker.name }}</td>
-                    <td>{{ booking.trek.trekname }}</td>
+                    <td><a href="{{ url_for('admin.admin_trekkers_view', trekker_id=booking.trekker.id) }}">#{{ booking.trekker.id }}</a>  {{ booking.trekker.name }}</td>
+                    <td><a href="{{ url_for('admin.admin_treks_view', trek_id=booking.trek.id) }}">#{{ booking.trek.id }}</a> {{ booking.trek.trekname }}</td>
                     <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
                     <td>{{ booking.booking_status }}</td>
                     <td>{{ booking.payment_status }}</td>
                     <td>
-                        <form action="{{ url_for('admin.admin_bookings_approve', booking_id=booking.id) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
-                        </form>
-                        <form action="{{ url_for('admin.admin_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
-                            <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
-                        </form>
-                        <a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}" class="btn btn-sm btn-primary">View</a>
+                        {% if booking.booking_status == "pending" %}
+                            <form action="{{ url_for('admin.admin_bookings_approve', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                            <form action="{{ url_for('admin.admin_bookings_reject', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                            </form>
+                        {% elif booking.booking_status == "booked" %}
+                            <form action="{{ url_for('admin.admin_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
+                            </form>
+                        {% endif %}
+                            <a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}" class="btn btn-sm btn-primary">View</a>
                     </td>
                 </tr>
                 {% endfor %}
