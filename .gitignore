@@ -21,3 +21,6 @@ instance/
 # IDEs
 .vscode/
 .idea/
+
+# Notes folder
+notes/
