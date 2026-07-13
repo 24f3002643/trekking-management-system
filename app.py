@@ -15,7 +15,7 @@ def create_app():
     #creating object of Flask class
     # __name__ stores the name of the current file
     app.debug = True
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'dev-fallback-secret-key-change-me'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///trekking-management.sqlite3'
     db.init_app(app)
     app.app_context().push()

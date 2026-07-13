@@ -139,7 +139,10 @@ def staff_treks_slots(trek_id):
         today = date.today()
         if today > trek.end_date:
             return render_template("message.html", title="Not Allowed", message="Trek cannot be updated after end date.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')    
-        new_total_slots = int(request.form.get("new_total_slots"))
+        try:
+            new_total_slots = int(request.form.get("new_total_slots"))
+        except (TypeError, ValueError):
+            return render_template("message.html", title="Incorrect Format", message="Slot value must be a valid number.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')
         booked = trek.total_slots - trek.available_slots
         if new_total_slots < booked :
             return render_template("message.html", title="Not Allowed", message="This trek already has more bookings than the new requested total slots. Cancel the trek, if the trek cannot proceed with the current bookings.", href=url_for('staff.staff_treks_page'), a_text='Back to Treks assigned')

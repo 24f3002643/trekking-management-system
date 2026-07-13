@@ -45,7 +45,7 @@
                     {% for booking in all_pending_bookings %}
                     <tr>
                         <td><a href="{{ url_for('admin.admin_bookings_view', booking_id=booking.id) }}">#{{ booking.id }}</a></td>
-                        <<td><a href="{{ url_for('admin.admin_trekkers_view', trekker_id=booking.trekker.id) }}">#{{ booking.trekker.id }}</a>  {{ booking.trekker.name }}</td>
+                        <td><a href="{{ url_for('admin.admin_trekkers_view', trekker_id=booking.trekker.id) }}">#{{ booking.trekker.id }}</a>  {{ booking.trekker.name }}</td>
                     <td><a href="{{ url_for('admin.admin_treks_view', trek_id=booking.trek.id) }}">#{{ booking.trek.id }}</a> {{ booking.trek.trekname }}</td>
                         <td>{{ booking.booking_date.strftime("%d %b %Y") }}</td>
                         <td>{{ booking.booking_status | title }}</td>

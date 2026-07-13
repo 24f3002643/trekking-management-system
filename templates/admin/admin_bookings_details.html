@@ -32,7 +32,7 @@
                     <form action="{{ url_for('admin.admin_bookings_cancel', booking_id=booking.id) }}" method="POST" style="display: inline;">
                         <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
                     </form>
-                {% elif booking.booking_status in ["completed", "cancelled", "initiated"] %}
+                {% elif booking.booking_status in ["completed", "cancelled"] %}
                     No Action Required
                 {% endif %}   
             </span>
