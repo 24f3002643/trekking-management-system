@@ -1325,30 +1325,24 @@
 
 ---
 
-## Decision 35 : `Booking.additional_info` — Verify Final Presence
+## Decision 35 : `Booking.additional_info` removed
 
 ### Info
 - Date : July 7-11, 2026
-- Status : Open / needs final verification before submission.
+- Status : Current
 
 ### Context
 - Earlier drafts of `models.py` during this project included a
-  `Booking.additional_info` column. The final schema reviewed at the
-  end of this development phase does not include it. It's unclear
-  whether this was a deliberate removal or an incidental omission.
+  `Booking.additional_info` column. 
+- The final schema reviewed at the end of this development phase does not include it.
 
 ### Decision
-- Not yet made. Before final submission, confirm:
-  (a) whether any route or template still references
-      `booking.additional_info`, and
-  (b) whether the column should be re-added or those references
-      removed.
+- `additional_info` column from `Booking` table have been removed.
 
 ### Reason
-- A dangling reference to a non-existent column would cause a runtime
-  `AttributeError` wherever it's used, if any such reference remains.
+- No need of this attribute was felt during development of application.
 
 ### Impact
-- Pending — to be resolved before final submission.
+- `Booking` table does not have `additional_info` attribute in the final database schema.
 
 ---

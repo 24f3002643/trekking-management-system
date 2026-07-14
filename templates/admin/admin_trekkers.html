@@ -14,9 +14,9 @@
         <h5 class="mb-0" >All Trekkers</h5>
         <form class="d-flex  gap-2" method="GET" action="{{ url_for('admin.admin_trekkers_page') }}">
 
-                <input type="number" class="form-control form-control-sm" name="id" placeholder="Staff ID" value="{{ request.args.get('id', '') }}">
+                <input type="number" class="form-control form-control-sm" name="id" placeholder="Trekker ID" value="{{ request.args.get('id', '') }}">
 
-                <input type="text" class="form-control form-control-sm" name="name" placeholder="Staff Name" value="{{ request.args.get('name', '') }}">
+                <input type="text" class="form-control form-control-sm" name="name" placeholder="Trekker Name" value="{{ request.args.get('name', '') }}">
 
                 <input type="email" class="form-control form-control-sm" name="email" placeholder="Email" value="{{ request.args.get('email', '') }}">
                 

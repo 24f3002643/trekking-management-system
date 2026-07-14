@@ -11,6 +11,8 @@ This is the final database design.
 
 ## Design Decision
 1. The project specification suggests a separate Staff Profile table. Since staff members do not have any attributes beyond those already present in User, a separate table would introduce redundancy. Therefore, staff are modeled as users with role = 'staff', while the many-to-many relationship between staff and treks is represented by the StaffTrekAssignment table.
+2. Booking and payment were originally two separate steps (`booking_status` included an `initiated` state, and `payment_status` included a `pending` state, representing a booking created before payment was completed). These were merged into a single step: a Booking row is now only ever created after payment succeeds, directly as `booking_status='pending'`, `payment_status='paid'`. This removed the `initiated` value from `booking_status` and the `pending` value from `payment_status` — see `project-decisions.md` for the full reasoning.
+3. `Trek.status` was originally computed automatically from `start_date`/`end_date` on every fetch. This was changed to fully manual control by Trek Staff and Admin, since the project statement's "mark trek as started/completed" language implies a deliberate action rather than a background computation — see `project-decisions.md` for the full reasoning.
 
 
 ## Database Modelling
@@ -65,10 +67,11 @@ Actors are the external entities that interact with the system.
     - available_slots
         - stores the number of slots currently available for booking.
     - status (upcoming/ongoing/completed/cancelled)
-        - upcoming : this will be status of trek, before the start date (if trek is not cancelled yet).
-        - ongoing : this will be status of trek, from start date to end date (if trek is not cancelled yet).
-        - completed : this will be status of trek, after the end date (if trek was not cancelled).
-        - cancelled : this will be status of trek, if the trek is cancelled, either before the start date, between the start date (included) and end date (included), or after the end date.
+        - This attribute is changed only by explicit action from Trek Staff or Admin — it is never automatically computed from start_date/end_date. start_date/end_date act as guards on when a transition is *permitted*, not as triggers.
+        - upcoming : the trek's initial status on creation. Can be changed to 'ongoing' (by Staff or Admin, once start_date has arrived) or 'cancelled' (by Admin only).
+        - ongoing : set manually by Staff or Admin once the trek has actually started. Can be changed to 'completed' or 'cancelled' (Staff or Admin can complete; Staff can only cancel from this state, Admin can cancel from this or 'upcoming').
+        - completed : set manually by Staff or Admin, only reachable from 'ongoing' (never directly from 'upcoming', for either role).
+        - cancelled : set manually, either by Admin (from 'upcoming' or 'ongoing') or by Staff (from 'ongoing' only, since Staff's cancel power exists for ground emergencies that only arise once a trek is underway). Blocked entirely once today > end_date, regardless of who is attempting it.
     - start_date
     - end_date
     - amount (decimal value)
@@ -79,17 +82,14 @@ Actors are the external entities that interact with the system.
     - user_id (foreign key)
     - trek_id (foreign key)
     - booking_date
-    - booking_status (initiated/pending/booked/cancelled/completed)
-        - initiated : trekker has started the booking process, but payment has not been completed yet.
-        - pending : trekker has requested for the booking, and payment has been made, but admin has not approved the booking yet.
+    - booking_status (pending/booked/cancelled/completed)
+        - pending : trekker has completed payment, and the booking has been created, but admin has not approved it yet.
         - booked : admin has approved the booking.
-        - cancelled : either trekker cancelled the booking himself, or the admin cancelled it.
-        - completed : the trek has been completed by the trekker.
-    - payment_status (pending/paid/refunded)
-        - pending : trekker has started process for the booking, but payment has not been made yet.
-        - paid : trekker has paid the amount for the booking.
-        - refunded : Either the trek was cancelled (by admin), or the booking was cancelled (either by trekker himself or by the admin).
-    - additional_info
+        - cancelled : either the trekker cancelled the booking himself, or the admin/staff cancelled the associated trek, or admin rejected the pending booking.
+        - completed : the associated trek has been marked completed, and this booking was 'booked' at that time.
+    - payment_status (paid/refunded)
+        - paid : payment has been made. Since booking and payment are a single combined step (a Booking row is only ever created after payment succeeds), every booking starts as 'paid' — there is no unpaid/pending payment state.
+        - refunded : the booking was subsequently cancelled (by the trekker, or as part of a trek-cancellation cascade), and the payment was refunded.
 
 
 ### Relationships
@@ -138,9 +138,8 @@ Actors are the external entities that interact with the system.
     - user_id (foreign key) //refers to id of User table, for user with role=="trekker"
     - trek_id (foreign key) //refers to id of Trek table
     - booking_date
-    - booking_status (initiated/pending/booked/cancelled/completed)
-    - payment_status (pending/paid/refunded)
-    - additional_info
+    - booking_status (pending/booked/cancelled/completed)
+    - payment_status (paid/refunded)
 
 4. StaffTrekAssignment
     - user_id (foreign key) //refers to id of User table, for user with role=="staff"
