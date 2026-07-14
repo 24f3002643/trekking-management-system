@@ -117,4 +117,4 @@ Password: password
 ```
 
 ## Academic Project
-This project was developed as part of the **Modern Application Development I (MAD-1)** course in the **BS Degree in Data Science and Applications** offered by **IIT Madras**.
+This project is the part of the **Modern Application Development I (MAD-1) Project** in the **BS Degree in Data Science and Applications** offered by **IIT Madras**.
